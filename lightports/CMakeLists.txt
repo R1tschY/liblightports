@@ -1,0 +1,7 @@
+add_subdirectory(base)
+add_subdirectory(com)
+add_subdirectory(controls)
+add_subdirectory(core)
+add_subdirectory(extra)
+add_subdirectory(ipc)
+add_subdirectory(shell)
