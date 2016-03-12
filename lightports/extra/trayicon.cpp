@@ -1,6 +1,7 @@
 #include "trayicon.h"
 
 #include <algorithm>
+#include <windowsx.h>
 #include <cpp-utils/algorithm/length.h>
 #include "../base/application.h"
 
@@ -13,7 +14,7 @@ TrayIcon::TrayIcon():
 {}
 
 void
-TrayIcon::add(HWND hwnd, HICON icon, cpp::wstring_view tooltip) {
+TrayIcon::add(HWND hwnd, const Icon& icon, cpp::wstring_view tooltip) {
     trayicon_.cbSize = sizeof(NOTIFYICONDATAW);
 #if (WINVER < 0x0600)
     trayicon_.uVersion         = NOTIFYICON_VERSION;
@@ -25,7 +26,7 @@ TrayIcon::add(HWND hwnd, HICON icon, cpp::wstring_view tooltip) {
     trayicon_.hWnd             = hwnd;
     trayicon_.uID              = ++LastId;
     trayicon_.uCallbackMessage = MessageId;
-    trayicon_.hIcon            = icon;
+    trayicon_.hIcon            = icon.getHICON();
 
     tooltip.copy(trayicon_.szTip, cpp::length(trayicon_.szTip));
 
@@ -59,7 +60,7 @@ TrayIcon::setToolTip(cpp::wstring_view src) {
 }
 
 void
-TrayIcon::showBalloon(cpp::wstring_view title, cpp::wstring_view msg, Icon icontype) {
+TrayIcon::showBalloon(cpp::wstring_view title, cpp::wstring_view msg, SystemIcon icontype) {
 #if (WINVER < 0x0600)
   trayicon_.uFlags = NIF_INFO;
 #else
@@ -72,10 +73,35 @@ TrayIcon::showBalloon(cpp::wstring_view title, cpp::wstring_view msg, Icon icont
   Shell_NotifyIconW(NIM_MODIFY, &trayicon_);
 }
 
-void TrayIcon::setIcon(HICON icon)
+LRESULT TrayIcon::handleMessage(WPARAM wparam, LPARAM lparam, MessageHandler handler)
+{
+#if (WINVER < 0x0600)
+  int id = wparam;
+  if (id != trayicon_.uID)
+    return 0;
+
+  UINT msg = lparam;
+  POINT pt;
+  GetCursorPos(&pt);
+  int x = pt.x;
+  int y = pt.y;
+#else
+  int id = HIWORD(lparam);
+  if (id != trayicon_.uID)
+    return 0;
+
+  UINT msg = LOWORD(lparam);
+  int x = GET_X_LPARAM(wparam);
+  int y = GET_Y_LPARAM(wparam);
+#endif
+
+  return handler(msg, x, y);
+}
+
+void TrayIcon::setIcon(const Icon& icon)
 {
   trayicon_.uFlags = NIF_ICON;
-  trayicon_.hIcon = icon;
+  trayicon_.hIcon = icon.getHICON();
   Shell_NotifyIconW(NIM_MODIFY, &trayicon_);
 }
 
