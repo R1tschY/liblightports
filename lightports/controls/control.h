@@ -34,17 +34,11 @@ public:
 
   // ctors/dtor
   explicit Control() :
-          handle_(nullptr),
-          parent_(nullptr),
-          class_(MAKEINTATOM(getWindowClass())),
-          style_(0),
-          exstyle_(0)
+          class_(MAKEINTATOM(getWindowClass()))
   {
   }
 
   explicit Control(DWORD style, DWORD exstyle = 0) :
-          handle_(nullptr),
-          parent_(nullptr),
           class_(MAKEINTATOM(getWindowClass())),
           style_(style),
           exstyle_(exstyle)
@@ -52,8 +46,6 @@ public:
   }
 
   explicit Control(const wchar_t* window_class, DWORD style, DWORD exstyle) :
-          handle_(nullptr),
-          parent_(nullptr),
           class_(window_class),
           style_(style),
           exstyle_(exstyle)
@@ -61,8 +53,6 @@ public:
   }
 
   explicit Control(ATOM window_class, DWORD style, DWORD exstyle) :
-          handle_(nullptr),
-          parent_(nullptr),
           class_(MAKEINTATOM(window_class)),
           style_(style),
           exstyle_(exstyle)
@@ -140,12 +130,12 @@ private:
   using Hwnd = std::unique_ptr<HWND, ControlDeleter>;
   using HwndRef = HWND;
 
-  Hwnd handle_;
+  Hwnd handle_ = nullptr;
 
-  HwndRef parent_;
-  const wchar_t* class_;
-  DWORD style_;
-  DWORD exstyle_;
+  HwndRef parent_ = nullptr;
+  const wchar_t* class_ = nullptr;
+  DWORD style_ = 0;
+  DWORD exstyle_ = 0;
 
   static ATOM getWindowClass();
 
