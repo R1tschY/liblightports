@@ -20,7 +20,7 @@ bool setProgramToAutostart(bool value) {
 
   if (value) {
     error = RegSetValueExW(key, Application::getName().data(), 0, REG_SZ,
-      (LPBYTE)(Application::getExecutablePath().toString().data()), (DWORD)((Application::getExecutablePath().toString().size() + 1) * sizeof(wchar_t)));
+      (LPBYTE)(Application::getExecutablePath().data()), (DWORD)((Application::getExecutablePath().size() + 1) * sizeof(wchar_t)));
   } else {
     if (RegQueryValueExW(key, Application::getName().data(),0,0,0,0) != ERROR_FILE_NOT_FOUND)
       error = RegDeleteValueW(key, Application::getName().data());
@@ -77,7 +77,7 @@ bool isProgramInAutostart() {
     }
     result = false;
   } else {
-    result = (Application::getExecutablePath().toString().compare(buffer) == 0);
+    result = (Application::getExecutablePath().compare(buffer) == 0);
   }
 
   RegCloseKey(key);

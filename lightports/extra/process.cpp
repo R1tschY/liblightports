@@ -15,11 +15,13 @@ Process Process::runCmdln(cpp::wstring_view cmdln, cpp::wstring_view working_dir
   si.hStdError = nullptr;
   si.hStdOutput = nullptr;
 
-  std::vector<wchar_t> command_line(cmdln.begin(), cmdln.end());
+  wchar_t command_line[cmdln.size()+1];
+  cmdln.copy(command_line, cmdln.size()+1);
+
   PROCESS_INFORMATION pi = { };
   BOOL success = CreateProcessW(
     nullptr,
-    command_line.data(),
+    command_line,
     nullptr,
     nullptr,
     false,

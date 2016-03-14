@@ -20,6 +20,28 @@ MenuEntryFlags operator|(MenuEntryFlags a, MenuEntryFlags b)
     return static_cast<MenuEntryFlags>(static_cast<int>(a) | static_cast<int>(b));
 }
 
+class MenuItemInfo
+{
+public:
+    MenuItemInfo() : data_()
+    {
+        data_.cbSize = sizeof(MENUITEMINFO);
+    }
+
+    void setState(UINT value)
+    {
+        data_.fMask |= MIIM_STATE;
+        data_.fState = value;
+    }
+
+    // TODO
+
+    const MENUITEMINFO& getMENUITEMINFO() const { return data_; }
+    MENUITEMINFO& getMENUITEMINFO() { return data_; }
+
+private:
+    MENUITEMINFO data_;
+};
 
 class Menu {
   Menu(const Menu&);
@@ -68,6 +90,16 @@ public:
   void insertEntryBefore(unsigned entry_command, unsigned command, const std::wstring& caption, MenuEntryFlags flags = MenuEntryFlags::Enabled)
   {
     ::InsertMenuW(hmenu_.get(), entry_command, MF_BYCOMMAND | MF_STRING | static_cast<int>(flags), command, caption.c_str());
+  }
+
+  void insertEntry(unsigned position, const MenuItemInfo& item)
+  {
+    ::InsertMenuItemW(hmenu_.get(), position, true, &item.getMENUITEMINFO());
+  }
+
+  void insertEntryBefore(unsigned entry_command, const MenuItemInfo& item)
+  {
+    ::InsertMenuItemW(hmenu_.get(), entry_command, false, &item.getMENUITEMINFO());
   }
 
   void addSeperator()

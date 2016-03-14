@@ -112,16 +112,16 @@ bool Application::Is64BitWindows()
 
 // Utils
 
-Path Application::getExecutablePath() {
+std::wstring Application::getExecutablePath() {
   wchar_t result[MAX_PATH+1];
   GetModuleFileNameW(nullptr, result, sizeof(result));
-  return Path(result);
+  return result;
 }
 
-Path Application::getConfigPath() {
+std::wstring Application::getConfigPath() {
   wchar_t path[MAX_PATH+1];
   HRESULT hr = SHGetFolderPathW(nullptr, CSIDL_APPDATA, nullptr, 0, path);
-  return Path((hr == S_OK) ? path : nullptr);
+  return (hr == S_OK) ? path : nullptr;
 }
 
 } // namespace Windows

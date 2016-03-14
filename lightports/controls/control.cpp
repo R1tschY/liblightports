@@ -94,7 +94,7 @@ void Control::create(
     int x, int y, int width, int height)
 {
   cpp_assert(!handle_);
-  win_print_on_fail(CreateWindowExW(
+  win_throw_on_fail(CreateWindowExW(
         // Optional window styles
         exstyle_,
 
@@ -122,8 +122,6 @@ void Control::create(
 
         // Additional application data
         this));
-
-  // TODO: error checking
 }
 
 void Control::destroy()
