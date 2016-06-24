@@ -1,11 +1,13 @@
 
 file(GLOB lightports_core_SOURCES "*.cpp")
 
-add_library(lightports-core STATIC ${lightports_core_SOURCES})
-target_link_libraries(lightports-core PUBLIC cpp-utils)
-target_include_directories(lightports-core PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/../..")
-
-set_target_properties(lightports-core PROPERTIES
-	CXX_STANDARD 14
-	CXX_STANDARD_REQUIRED ON
+lightport_module(
+  NAME lightports-core
+  EX_DEPS cpp-utils
+  SOURCES ${lightports_core_SOURCES}
 )
+
+# TODO
+target_include_directories(lightports-core PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/../..")
+target_include_directories(lightports-core32 PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/../..")
+target_include_directories(lightports-core64 PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/../..")
