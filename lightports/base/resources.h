@@ -9,7 +9,7 @@
 #define LIBS_WINDOWS_BASE_RESOURCES_H_
 
 #include <string>
-#include <lightports/extra/dll.h>
+#include "module.h"
 #include <lightports/core/memory.h>
 #include <windows.h>
 

@@ -1,7 +1,7 @@
 #include "hook.h"
 
 #include "../core/macros.h"
-#include "../extra/dll.h"
+#include "../base/module.h"
 
 #include <cpp-utils/algorithm/erase.h>
 
