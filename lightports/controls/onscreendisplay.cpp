@@ -1,6 +1,7 @@
 #include "onscreendisplay.h"
 
 #include "../core/debug.h"
+#include "gdiplus.h"
 
 using namespace Gdiplus;
 
@@ -17,14 +18,14 @@ OnScreenDisplay::OnScreenDisplay() :
 void OnScreenDisplay::onPaint(Graphics& context)
 {
   SolidBrush pen(Color(Color::Black));
-  context.FillRectangle(&pen, getClientRect());
+  context.FillRectangle(&pen, convert_to<Gdiplus::RectF>(getClientRect()));
 
   SolidBrush white(Color(Color::White));
   Font font(L"Arial", 32);
   StringFormat format;
   format.SetAlignment(StringAlignmentCenter);
 
-  context.DrawString(L"PowerWin", -1, &font, getClientRect().getRectF(), &format, &white);
+  context.DrawString(L"PowerWin", -1, &font, convert_to<Gdiplus::RectF>(getClientRect()), &format, &white);
 }
 
 void OnScreenDisplay::onCreate()
