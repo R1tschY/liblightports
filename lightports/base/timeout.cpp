@@ -1,6 +1,8 @@
 #include "timeout.h"
 
 #include <memory>
+#include <exception>
+#include <cpp-utils/assert.h>
 
 #include "../core/debug.h"
 #include "../base/charcodecs.h"
@@ -9,79 +11,91 @@
 namespace Windows {
 
 Timeout::Timeout(const Callback& callback, int milliseconds):
-  callback_(callback), enabled_(false)
+  callback_(callback), interval_(milliseconds), enabled_(false)
+{ }
+
+Timeout::~Timeout()
 {
-  if (milliseconds <= 0) return;
-
-  win_throw_on_fail(SetTimer(getCallbackWindow(), (UINT_PTR)this, milliseconds, ccallback));
-  enabled_ = true;
+  stop();
 }
 
-Timeout::~Timeout() {
-  if (enabled_) {
-    KillTimer(getCallbackWindow(), (UINT_PTR)&callback_);
-  }
-}
+void Timeout::start()
+{
+  stop();
 
-void Timeout::setInterval(int milliseconds) {
-  if (milliseconds <= 0) {
-    if (enabled_) {
-      KillTimer(getCallbackWindow(), (UINT_PTR)this);
-      enabled_ = false;
-    }
+  if (interval_ <= 0)
     return;
-  }
 
   win_throw_on_fail(
-        SetTimer(getCallbackWindow(), (UINT_PTR)this, milliseconds, ccallback));
+    SetTimer(getCallbackWindow(), (UINT_PTR)this, interval_, ccallback)
+  );
   enabled_ = true;
 }
 
-void Timeout::setCallback(const Callback& callback) {
+void Timeout::stop()
+{
+  if (enabled_)
+  {
+    KillTimer(getCallbackWindow(), (UINT_PTR)this);
+    enabled_ = false;
+  }
+}
+
+void Timeout::setInterval(int milliseconds)
+{
+  interval_ = milliseconds;
+  if (enabled_)
+    start();
+}
+
+void Timeout::setCallback(const Callback& callback)
+{
   callback_ = callback;
 }
 
 void Timeout::execute(const Callback& callback, int milliseconds) {
   UINT_PTR cb = reinterpret_cast<UINT_PTR>(new Callback(callback));
-  win_throw_on_fail(SetTimer(getCallbackWindow(), cb, milliseconds, cexecallback));
+  win_throw_on_fail(
+    SetTimer(getCallbackWindow(), cb, milliseconds, cexecallback)
+  );
 }
 
-void CALLBACK Timeout::ccallback(HWND, UINT msg, UINT_PTR callback, DWORD) {
-  if (msg == WM_TIMER) {
-    auto* timeout = reinterpret_cast<Timeout*>(callback);
+void CALLBACK Timeout::ccallback(HWND, UINT msg, UINT_PTR data, DWORD)
+{
+  if (msg != WM_TIMER)
+    return;
 
-    if (!timeout) {
-       print(L"timeout callback call failed: callback == NULL\n");
-       return;
-    }
+  auto self = reinterpret_cast<Timeout*>(data);
+  cpp_assert(self != nullptr);
 
-    try {
-      timeout->callback_();
-    } catch (const std::bad_function_call& error) {
-      print(L"timeout callback call failed: %s\n",
-            to_wstring(error.what()).c_str());
-    }
+  try
+  {
+    if (self->enabled_)
+      self->callback_();
+  }
+  catch (const std::bad_function_call& error)
+  {
+    print(L"timeout callback call failed: %s\n",  error.what());
   }
 }
 
-void CALLBACK Timeout::cexecallback(HWND, UINT msg, UINT_PTR callback, DWORD) {
-  if (msg == WM_TIMER) {
-    auto cb = std::unique_ptr<Callback>(reinterpret_cast<Callback*>(callback));
+void CALLBACK Timeout::cexecallback(HWND, UINT msg, UINT_PTR callback, DWORD)
+{
+  if (msg != WM_TIMER) return;
 
-    if (!cb) {
-       print(L"timeout callback call failed: callback == NULL\n");
-       return;
-    }
+  auto cb = std::unique_ptr<Callback>(reinterpret_cast<Callback*>(callback));
+  cpp_assert(cb != nullptr);
 
-    try {
-      (*cb)();
-    } catch (const std::bad_function_call& error) {
-      print(L"timeout callback call failed: %s\n",
-            to_wstring(error.what()).c_str());
-    }
-
-    KillTimer(getCallbackWindow(), callback);
+  try
+  {
+    (*cb)();
   }
+  catch (const std::bad_function_call& error)
+  {
+    print(L"timeout callback call failed: %s\n", error.what());
+  }
+
+  KillTimer(getCallbackWindow(), callback);
 }
 
 } // namespace Windows
