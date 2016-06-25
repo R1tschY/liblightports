@@ -4,7 +4,6 @@
 #include <windows.h>
 
 #include "../core/geometry.h"
-#include <c++/utils.h>
 
 namespace Windows {
 
@@ -14,7 +13,7 @@ public:
   class Info {
   public:
     // ctor
-    Info() : info_{sizeof(info_)} { }
+    Info() { info_.cbSize = sizeof(info_); }
     Info(const MONITORINFO& info) : info_(info) { }
 
     // native
@@ -23,7 +22,6 @@ public:
     }
 
     // properties
-    DWORD getSize() const { return info_.cbSize; }
     Rectangle getMonitorRect() const { return info_.rcMonitor; }
     Rectangle getWorkRect() const { return info_.rcWork; }
     bool isPrimary() const { return info_.dwFlags == MONITORINFOF_PRIMARY; }

@@ -1,7 +1,7 @@
-/// \file bits.h
-
 #ifndef HOOKLIB_WINDOWS_BITS_H_
 #define HOOKLIB_WINDOWS_BITS_H_
+
+#include <cstdint>
 
 namespace Windows {
 
@@ -12,7 +12,7 @@ constexpr uint16_t low_word(uint32_t x) {
 }
 
 constexpr uint32_t low_word(uint32_t x, uint16_t value) {
-  return (x & 0xFFFF0000) | value;
+  return (x & UINT32_C(0xFFFF0000)) | value;
 }
 
 constexpr uint16_t high_word(uint32_t x) {
@@ -20,7 +20,7 @@ constexpr uint16_t high_word(uint32_t x) {
 }
 
 constexpr uint32_t high_word(uint32_t x, uint16_t value) {
-  return (x & 0x0000FFFF) | (value << 16);
+  return (x & UINT32_C(0x0000FFFF)) | (value << 16);
 }
 
 constexpr uint32_t dword(uint16_t high, uint16_t low) {
@@ -34,7 +34,7 @@ constexpr uint8_t low_byte(uint16_t x) {
 }
 
 constexpr uint16_t low_byte(uint16_t x, uint8_t value) {
-  return (x & 0xFF00) | value;
+  return static_cast<uint16_t>((x & UINT16_C(0xFF00)) | value);
 }
 
 constexpr uint8_t high_byte(uint16_t x) {
@@ -42,11 +42,11 @@ constexpr uint8_t high_byte(uint16_t x) {
 }
 
 constexpr uint16_t high_byte(uint16_t x, uint8_t value) {
-  return (x & 0x00FF) | (value << 8);
+  return static_cast<uint16_t>((x & UINT16_C(0x00FF)) | (value << 8));
 }
 
 constexpr uint16_t word(uint8_t high, uint8_t low) {
-  return (static_cast<uint16_t>(high) << 8) | (low);
+  return static_cast<uint16_t>((static_cast<uint16_t>(high) << 8) | (low));
 }
 
 } // namespace Windows
