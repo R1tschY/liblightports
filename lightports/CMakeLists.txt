@@ -18,7 +18,7 @@ function(lightport_lib)
     
     # set right deps
     set(_orig_deps ${${prefix}_IN_DEPS})
-    unset(${prefix}_DEPS)
+    unset(${prefix}_IN_DEPS)
     foreach(_dep ${_orig_deps})
       list(APPEND ${prefix}_IN_DEPS ${_dep}${${prefix}_BITS})
     endforeach()    
@@ -37,9 +37,20 @@ endfunction()
 
 function(lightport_module)
 
-  lightport_lib(${ARGN})
+  # options
+  
+  set(oneValueArgs NAME)
+  set(prefix lightport_module)
+  cmake_parse_arguments(${prefix} "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
+
   lightport_lib(${ARGN} BITS 32)
   lightport_lib(${ARGN} BITS 64)
+  
+  if (NOT(CMAKE_SIZEOF_VOID_P EQUAL 8))
+    add_library(${${prefix}_NAME} ALIAS ${${prefix}_NAME}64)
+  else()
+    add_library(${${prefix}_NAME} ALIAS ${${prefix}_NAME}32)
+  endif()
 
 endfunction()
 
@@ -49,4 +60,5 @@ add_subdirectory(controls)
 add_subdirectory(core)
 add_subdirectory(extra)
 add_subdirectory(ipc)
+add_subdirectory(dll)
 add_subdirectory(shell)
