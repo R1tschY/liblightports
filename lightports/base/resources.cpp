@@ -6,8 +6,8 @@
  */
 
 #include "resources.h"
-#include <windows/core/debug.h>
-#include <Commctrl.h>
+#include <lightports/core/debug.h>
+#include <commctrl.h>
 
 namespace Windows {
 
