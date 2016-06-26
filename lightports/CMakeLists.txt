@@ -46,7 +46,7 @@ function(lightport_module)
   lightport_lib(${ARGN} BITS 32)
   lightport_lib(${ARGN} BITS 64)
   
-  if (NOT(CMAKE_SIZEOF_VOID_P EQUAL 8))
+  if (CMAKE_SIZEOF_VOID_P EQUAL 8)
     add_library(${${prefix}_NAME} ALIAS ${${prefix}_NAME}64)
   else()
     add_library(${${prefix}_NAME} ALIAS ${${prefix}_NAME}32)
