@@ -10,8 +10,11 @@ namespace Windows {
 ////////////////////////////////////////////////////////////////////////////////
 //     ConfigFile
 ////////////////////////////////////////////////////////////////////////////////
-bool ConfigFile::existsKey(cpp::wstring_view section, cpp::wstring_view key) const {
-  static const auto test = wstring_literal("?#ßüäö§$%&!");
+bool ConfigFile::existsKey(cpp::wstring_view section, cpp::wstring_view key) const
+{
+  using namespace cpp::string_view_literals;
+
+  constexpr auto test = L"?#ßüäö§$%&!"sv;
   return getString(section, key, test) != test;
 }
 
@@ -61,7 +64,7 @@ std::vector<std::wstring> ConfigFile::getSections() const {
   wchar_t buffer[2048];
   DWORD bytes;
 
-  bytes = GetPrivateProfileStringW(NULL, NULL, NULL, buffer, sizeof(buffer), filename_.c_str());
+  bytes = GetPrivateProfileStringW(nullptr, nullptr, nullptr, buffer, sizeof(buffer), filename_.c_str());
   // TODO: Puffer zu klein -> bytes == sizeof(buffer)-2
 
   return splitStringArray(buffer);
@@ -69,9 +72,14 @@ std::vector<std::wstring> ConfigFile::getSections() const {
 
 std::vector<std::wstring> ConfigFile::getKeys(cpp::wstring_view section) const {
   wchar_t buffer[2048];
-  DWORD bytes;
 
-  bytes = GetPrivateProfileStringW(section.data(), NULL, NULL, buffer, sizeof(buffer), filename_.c_str());
+  DWORD bytes = GetPrivateProfileStringW(
+    section.data(),
+    nullptr,
+    nullptr,
+    buffer, sizeof(buffer),
+    filename_.c_str()
+  );
   // TODO: Puffer zu klein -> bytes == sizeof(buffer)-2
 
   return splitStringArray(buffer);
