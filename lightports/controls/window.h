@@ -23,6 +23,11 @@ public:
 
   void setOpacity(float value);
   float getOpacity() const;
+
+  static HWND find(cpp::wstring_view class_name, cpp::wstring_view window_name)
+  {
+    return FindWindowW(class_name.data(), window_name.data());
+  }
 };
 
 } // namespace Windows

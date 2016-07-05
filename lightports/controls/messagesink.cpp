@@ -23,9 +23,9 @@ MessageSink::MessageSink(MessageFunc wndproc) :
 {
 }
 
-void MessageSink::create()
+void MessageSink::create(cpp::wstring_view name)
 {
-  Control::create(HWND_MESSAGE, wstring_literal("MessageSink"), 0, 0, 0, 0);
+  Control::create(HWND_MESSAGE, name, 0, 0, 0, 0);
 }
 
 LRESULT MessageSink::onMessage(UINT msg, WPARAM wparam, LPARAM lparam)

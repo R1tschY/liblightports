@@ -7,11 +7,43 @@
 #include <windows.h>
 #include <cpp-utils/strings/string_view.h>
 #include <cpp-utils/assert.h>
+#include <cpp-utils/iterator_range.h>
 #include "../core/macros.h"
 #include "../core/geometry.h"
 #include "../core/debug.h"
 
 namespace Windows {
+
+struct FindWindowIteratorSentinel { };
+
+class FindWindowIterator : public std::iterator<std::forward_iterator_tag, HWND>
+{
+public:
+  FindWindowIterator(HWND parent, cpp::wstring_view window_class, cpp::wstring_view window_title)
+  : parent_(parent), class_(window_class.data()), window_(window_title.data())
+  {
+    ++(*this);
+  }
+
+  bool operator==(FindWindowIteratorSentinel) { return hwnd_ == nullptr; }
+  bool operator==(FindWindowIterator& iter) { return hwnd_ == iter.hwnd_; }
+
+  FindWindowIterator& operator++()
+  {
+    FindWindowExW(parent_, hwnd_, window_, class_);
+    return *this;
+  }
+
+  HWND operator*() const { return hwnd_; }
+
+private:
+  const wchar_t* window_ = nullptr;
+  const wchar_t* class_ = nullptr;
+  HWND parent_ = nullptr;
+
+  HWND hwnd_ = nullptr;
+};
+
 
 class Control {
   DISALLOW_COPY_AND_ASSIGN(Control);
@@ -118,6 +150,21 @@ public:
       HBRUSH background,
       cpp::wstring_view menu,
       HICON small_icon);
+
+  static HWND find(HWND parent, cpp::wstring_view class_name, cpp::wstring_view window_name)
+  {
+    return FindWindowExW(parent, nullptr, class_name.data(), window_name.data());
+  }
+
+  static
+  cpp::iterator_range<FindWindowIterator, FindWindowIteratorSentinel>
+  findAll(HWND parent, cpp::wstring_view class_name, cpp::wstring_view window_name)
+  {
+    return cpp::iterator_range<FindWindowIterator, FindWindowIteratorSentinel>(
+        FindWindowIterator(parent, class_name, window_name),
+        FindWindowIteratorSentinel()
+      );
+  }
 
 private:
 
