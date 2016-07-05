@@ -83,7 +83,7 @@ int Application::processMessages()
   return (int) msg.wParam;
 }
 
-bool Application::Is64BitWindows()
+bool Application::is64BitWindows()
 {
 #if CPUBITSET == 32
   // We can check if the operating system is 64-bit by checking whether

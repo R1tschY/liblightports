@@ -38,7 +38,9 @@ public:
   // system
   //static WindowsVersion getWindowsVersion() { return winversion; }
   // TODO: static string getWindowsVersionString();
-  static bool Is64BitWindows();
+
+  /// \todo move to Process
+  static bool is64BitWindows();
 
   // messages
   static int processMessages();
