@@ -168,6 +168,10 @@ LRESULT Control::onMessage(UINT msg, WPARAM wparam, LPARAM lparam) {
     onDestroy();
     return 0;
 
+  case WM_NCDESTROY:
+    handle_.release();
+    return 0;
+
   default:
     return DefWindowProc(handle_.get(), msg, wparam, lparam);
   }
