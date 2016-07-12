@@ -1,3 +1,4 @@
+include(CMakeParseArguments)
 
 function(lightport_lib)
 
