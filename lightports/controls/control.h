@@ -11,6 +11,7 @@
 #include "../core/macros.h"
 #include "../core/geometry.h"
 #include "../core/debug.h"
+#include "../core/exception.h"
 
 namespace Windows {
 
@@ -30,16 +31,18 @@ public:
 
   FindWindowIterator& operator++()
   {
-    FindWindowExW(parent_, hwnd_, window_, class_);
+    hwnd_ = ::FindWindowExW(parent_, hwnd_, window_, class_);
+    if (!hwnd_)
+      throw Exception(GetLastError());
     return *this;
   }
 
   HWND operator*() const { return hwnd_; }
 
 private:
-  const wchar_t* window_ = nullptr;
-  const wchar_t* class_ = nullptr;
   HWND parent_ = nullptr;
+  const wchar_t* class_ = nullptr;
+  const wchar_t* window_ = nullptr;
 
   HWND hwnd_ = nullptr;
 };

@@ -4,6 +4,7 @@
 #include <memory>
 #include <type_traits>
 #include <windows.h>
+#include <cpp-utils/memory/unique_array.h>
 
 namespace Windows {
 
@@ -14,13 +15,16 @@ namespace Windows {
 namespace Detail {
 struct LocalDeleter {
   void operator()(void* ptr) {
-    LocalFree(ptr);
+    ::LocalFree(ptr);
   }
 };
 } // namespace Detail
 
 template<typename T>
 using LocalPtr = std::unique_ptr<T, Detail::LocalDeleter>;
+
+template<typename T>
+using LocalArray = cpp::unique_array<T, Detail::LocalDeleter>;
 
 //
 // GeneralHandle
@@ -59,7 +63,7 @@ struct HandleDeleter {
   typedef HANDLE pointer;
 
   void operator()(HANDLE ptr)
-  { CloseHandle(ptr); }
+  { ::CloseHandle(ptr); }
 };
 
 using Handle = std::unique_ptr<HANDLE, HandleDeleter>;
@@ -68,7 +72,7 @@ struct HandleExDeleter {
   typedef HANDLE pointer;
 
   void operator()(HANDLE ptr)
-  { if (ptr != INVALID_HANDLE_VALUE) CloseHandle(ptr); }
+  { if (ptr != INVALID_HANDLE_VALUE) ::CloseHandle(ptr); }
 };
 
 using HandleEx = std::unique_ptr<HANDLE, HandleExDeleter>;
@@ -77,7 +81,7 @@ struct FindHandleDeleter {
   typedef HANDLE pointer;
 
   void operator()(HANDLE ptr)
-  { if (ptr != INVALID_HANDLE_VALUE) FindClose(ptr); }
+  { if (ptr != INVALID_HANDLE_VALUE) ::FindClose(ptr); }
 };
 
 using FindHandle = std::unique_ptr<HANDLE, FindHandleDeleter>;

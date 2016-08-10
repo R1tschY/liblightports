@@ -42,7 +42,7 @@ void Timer::stop() {
 }
 
 double Timer::getSeconds() const {
-  return (stop_.QuadPart - start_.QuadPart) * getFrequency();
+  return double(stop_.QuadPart - start_.QuadPart) * getFrequency();
 }
 
 }

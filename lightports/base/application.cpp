@@ -51,7 +51,7 @@ Application::Application(cpp::wstring_view name, HINSTANCE instance) :
   DWORD error = GetLastError();
   if (!mutex_) {
     WIN_WARNING(L"cannot create application mutex: %s",
-                GetWindowsError(error).c_str());
+                getWindowsError(error).c_str());
   }
 
   is_running_ = (error == ERROR_ALREADY_EXISTS);
