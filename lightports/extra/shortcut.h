@@ -5,9 +5,16 @@
 
 namespace Windows {
 
-struct ShortCut {
-  unsigned modifiers;
-  unsigned key;
+struct ShortCut
+{
+  unsigned modifiers = 0;
+  unsigned key = 0;
+
+  bool isValid() const noexcept { return key != 0; }
+  explicit operator bool() const noexcept
+  {
+    return isValid();
+  }
 };
 
 } // namespace Windows
