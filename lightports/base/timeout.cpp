@@ -10,6 +10,10 @@
 
 namespace Windows {
 
+Timeout::Timeout() :
+  callback_(), interval_(-1), enabled_(false)
+{ }
+
 Timeout::Timeout(const Callback& callback, int milliseconds):
   callback_(callback), interval_(milliseconds), enabled_(false)
 { }

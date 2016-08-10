@@ -14,6 +14,7 @@ class Timeout
 public:
   typedef std::function<void()> Callback;
 
+  Timeout();
   Timeout(const Callback& callback, int seconds = 0);
   ~Timeout();
 
