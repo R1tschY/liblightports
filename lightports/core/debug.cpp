@@ -4,49 +4,137 @@
 #include <cerrno>  // für errno
 #include <cstdio>  // für printf
 #include <sstream>
+#include <codecvt>
+#include <locale>
 #include <wchar.h>
 #include <string>
 #include <cpp-utils/algorithm/length.h>
+#include <cpp-utils/assert.h>
+#include <cpp-utils/iostreams/small_stringstream.h>
 
 #include "memory.h"
 #include "exception.h"
 
 namespace Windows {
 
-static LocalPtr<wchar_t>
-GetErrorString(DWORD code) noexcept {
+namespace Language {
+enum : DWORD
+{
+  Neutral = MAKELANGID(LANG_NEUTRAL, SUBLANG_NEUTRAL),
+  Invariant = MAKELANGID(LANG_INVARIANT, SUBLANG_NEUTRAL),
+  SystemDefault = MAKELANGID(LANG_SYSTEM_DEFAULT, SUBLANG_SYS_DEFAULT),
+  UserDefault = MAKELANGID(LANG_USER_DEFAULT, SUBLANG_DEFAULT),
+};
+} // namespace Language
+
+static
+LocalArray<wchar_t> getErrorString(DWORD code, DWORD language)
+{
   wchar_t* buffer;
-  FormatMessageW(
+  DWORD bytes = FormatMessageW(
       FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS,
       nullptr,
       code,
-      MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
+      language,
       (wchar_t*)&buffer,
       0,
       nullptr);
 
-  if (buffer != nullptr) {
-    auto len = std::char_traits<wchar_t>::length(buffer);
-    if (len > 1 && buffer[len - 1] == '\n') {
-       buffer[len-1] = 0;
-       if (buffer[len - 2] == '\r')
-         buffer[len-2] = 0;
-    }
-  }
+  if (bytes > 0)
+    // FormatMessageW succeeded
+    return LocalArray<wchar_t>{ buffer, bytes };
 
-  return LocalPtr<wchar_t>(buffer);
+  DWORD error = ::GetLastError();
+  if (error == 0)
+    // TODO: empty message ?!
+    return LocalArray<wchar_t>();
+
+  return LocalArray<wchar_t>();
 }
 
-std::wstring
-GetWindowsError(DWORD code) {
-  auto error_string = GetErrorString(code);
+//static
+//void getErrorString(DWORD code, DWORD language, std::wstring& result)
+//{
+//  if (result.capacity() < 64)
+//    result.append(64 - result.size(), L'\0');
+//  else
+//    result.append(result.capacity() - result.size(), L'\0');
+//
+//  DWORD chars = ::FormatMessageW(
+//      FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS,
+//      nullptr,
+//      code,
+//      language,
+//      &(*result.begin()),
+//      result.size(),
+//      nullptr);
+//
+//  if (chars > 0) {
+//    // FormatMessageW succeeded
+//    result.erase(chars + 1);
+//  }
+//  else
+//  {
+//    result = std::to_wstring(code);
+//
+//    DWORD error = ::GetLastError();
+//    if (error != 0)
+//      print(L"Lightports: Failed to format error message %d with error code %d", code, error);
+//  }
+//}
+
+//static
+//std::wstring getErrorString(DWORD code, DWORD language)
+//{
+//  wchar_t buffer[256];
+//
+//  DWORD chars = ::FormatMessageW(
+//      FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS,
+//      nullptr,
+//      code,
+//      language,
+//      &buffer,
+//      cpp::length(buffer),
+//      nullptr);
+//
+//  if (chars > 0)
+//    // FormatMessageW succeeded
+//    return std::wstring(buffer, chars);
+//
+//  DWORD error = ::GetLastError();
+//  if (error == 0)
+//    // empty message!
+//    return std::to_wstring(code);
+//
+//  print(L"Lightports: Failed to format error message %d with error code %d", code, error);
+//
+//  return std::to_wstring(code);
+//}
+
+std::wstring getWindowsError(DWORD code)
+{
+  auto error_string = getErrorString(code, Language::Neutral);
   if (!error_string) {
-    std::wstringstream strstream;
-    strstream << "Error code: " << code;
-    return strstream.str();
+    wchar_t buffer[64];
+    cpp::small_owstringstream<64> stream;
+    stream << "Error code: " << code;
+    return stream.str();
   }
 
-  return std::wstring(error_string.get());
+  return std::wstring(error_string.data(), error_string.size());
+}
+
+std::string getAsciiWindowsError(DWORD code)
+{
+  auto error_string = getErrorString(code, Language::Neutral);
+  if (!error_string) {
+    cpp::small_ostringstream<64> stream;
+    stream << "Error code: " << code;
+    return stream.str();
+  }
+
+  std::wstring_convert<std::codecvt_utf8<wchar_t>> converter;
+  return converter.to_bytes(error_string.begin(), error_string.end());
 }
 
 void printMessage(LogLevel level, const wchar_t* format, ...) {
@@ -83,9 +171,9 @@ void printMessage(LogLevel level, const wchar_t* format, ...) {
 }
 
 void printError(cpp::wstring_view error_message, DWORD error_code) {
-  auto error_string = GetErrorString(error_code);
+  auto error_string = getErrorString(error_code, Language::Neutral);
   if (error_string) {
-    WIN_CRITICAL(L"Error while call of %ls: %ls", error_message.data(), error_string.get());
+    WIN_CRITICAL(L"Error while call of %ls: %ls", error_message.data(), error_string.data());
   }
   else
   {
@@ -94,9 +182,9 @@ void printError(cpp::wstring_view error_message, DWORD error_code) {
 }
 
 void printWindowsFail(const char* func, const char* error_message, DWORD error_code) {
-  auto error_string = GetErrorString(error_code);
+  auto error_string = getErrorString(error_code, Language::Neutral);
   if (error_string) {
-    WIN_CRITICAL(L"Error while call of %s %s: %ls", func, error_message, error_string.get());
+    WIN_CRITICAL(L"Error while call of %s %s: %ls", func, error_message, error_string.data());
   }
   else
   {
@@ -105,9 +193,9 @@ void printWindowsFail(const char* func, const char* error_message, DWORD error_c
 }
 
 void throwWindowsFail(const char* func, const char* error_message, DWORD error_code) {
-  auto error_string = GetErrorString(error_code);
+  auto error_string = getErrorString(error_code, Language::Neutral);
   if (error_string) {
-    WIN_CRITICAL(L"Error while call of %s %s: %ls", func, error_message, error_string.get());
+    WIN_CRITICAL(L"Error while call of %s %s: %ls", func, error_message, error_string.data());
   }
   else
   {
@@ -122,49 +210,12 @@ void throwWindowsFail(const char* func, const char* error_message, DWORD error_c
 void print(const wchar_t* format, ...) {
   wchar_t buffer[1024];
   va_list vl;
-  static std::size_t line = 0;
-  line++;
-
-  snwprintf(buffer, 5, L"%03d:", line);
 
   va_start(vl, format);
-  vsnwprintf(buffer + 5, 1023 - 5, format, vl);
+  vsnwprintf(buffer, 1023, format, vl);
   va_end(vl);
 
-  buffer[4] = L' ';
   buffer[1023] = L'\0';
 
   OutputDebugStringW(buffer);
-}
-
-/*void print(const char* format, ...) {
-  char buffer[1024];
-  va_list vl;
-
-  va_start(vl, format);
-  vsnprintf(buffer, 1023, format, vl);
-  va_end(vl);
-
-  buffer[1023] = '\0';
-
-  OutputDebugStringA(buffer);
-}*/
-
-void print_window_infos(HWND hwnd) {
-  OutputDebugStringW(L"---------------------------------------------------------\n");
-  wchar_t window_name[255];
-  GetWindowText(hwnd, window_name, sizeof(window_name));
-  print(L"window title:\n\t%s\n", window_name);
-
-  wchar_t class_name[255];
-  GetClassNameW(hwnd, class_name, sizeof(class_name));
-  print(L"window class name:\n\t%s\n", class_name);
-
-  RECT geometry;
-  GetWindowRect(hwnd, &geometry);
-  OutputDebugString(L"Geometrie:\n");
-  print(L"\tx1: %li,\t y1: %li\n", geometry.left, geometry.top);
-  print(L"\tx2: %li,\t y2: %li\n", geometry.right, geometry.bottom);
-
-  OutputDebugStringW(L"---------------------------------------------------------\n\n");
 }

@@ -14,7 +14,7 @@
 
 namespace Windows {
 
-class Exception: public std::exception {
+class Exception : public std::exception {
 public:
   Exception(DWORD error_code);
   Exception(HRESULT error_code);
@@ -24,15 +24,16 @@ public:
 
   virtual ~Exception();
 
-  const wchar_t* getMessage() const { return message_.c_str(); }
   HRESULT getHResult() const { return error_code_; }
   unsigned int getErrorCode() const { return HRESULT_CODE(error_code_); }
 
   int getSourceCodeLine() const { return line_; }
   const wchar_t* getSourceCodeFile() const { return file_; }
 
+  virtual const char* what() const noexcept;
+
 private:
-  std::wstring message_;
+  std::string message_;
   HRESULT error_code_;
 
   unsigned int line_;

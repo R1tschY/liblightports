@@ -36,11 +36,12 @@ void printMessage(LogLevel level, const wchar_t* format, ...);
 //
 // Windows API error
 
-std::wstring GetWindowsError(DWORD code);
+std::wstring getWindowsError(DWORD code);
+std::string getAsciiWindowsError(DWORD code);
 
 inline std::wstring
 GetLastWindowsError() {
-  return GetWindowsError(GetLastError());
+  return getWindowsError(GetLastError());
 }
 
 void printError(std::experimental::wstring_view error_message, DWORD error_code);
