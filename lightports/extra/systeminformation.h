@@ -7,6 +7,32 @@
 
 namespace Windows {
 
+// SystemMetrics
+
+namespace SystemMetrics {
+
+inline
+int getMetric(int id) noexcept
+{
+  return ::GetSystemMetrics(id);
+}
+
+inline
+Size getDefaultIconSize()
+{
+  return Size(getMetric(SM_CXICON), getMetric(SM_CYICON));
+}
+
+inline
+Size getDefaultSmallIconSize()
+{
+  return Size(getMetric(SM_CXSMICON), getMetric(SM_CYSMICON));
+}
+
+} // namespace SystemMetrics
+
+// Monitor
+
 class Monitor {
 public:
   // types
