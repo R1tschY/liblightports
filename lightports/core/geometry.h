@@ -13,6 +13,46 @@
 
 namespace Windows {
 
+// Size
+
+class Size {
+public:
+  constexpr Size() noexcept {}
+
+  constexpr Size(LONG width, LONG height) noexcept :
+    width_(width), height_(height)
+  {}
+
+  constexpr LONG getWidth() const noexcept {
+    return width_;
+  }
+
+  constexpr void setWidth(LONG width = 0)
+  {
+    width_ = width;
+  }
+
+  constexpr LONG getHeight() const noexcept {
+    return height_;
+  }
+
+  constexpr void setHeight(LONG height = 0)
+  {
+    height_ = height;
+  }
+
+private:
+  LONG width_ = 0, height_ = 0;
+};
+
+template<typename Stream>
+Stream& operator<<(Stream& stream, Size size)
+{
+  return stream << L"Windows::Size(width=" << size.getWidth() << L", height=" << size.getHeight() << L")";
+}
+
+// Point
+
 class Point {
 public:
   // constructors
@@ -23,10 +63,6 @@ public:
 
   constexpr Point(LONG x, LONG y) noexcept :
   internal_ {x,y}
-  {}
-
-  constexpr Point(const Point& other) noexcept :
-  internal_ {other.internal_.x,other.internal_.y}
   {}
 
   constexpr Point(const POINT& other) noexcept :

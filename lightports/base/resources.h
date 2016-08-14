@@ -11,7 +11,9 @@
 #include <string>
 #include "module.h"
 #include <lightports/core/memory.h>
+#include <lightports/core/geometry.h>
 #include <windows.h>
+#include <lightports/extra/icon.h>
 
 namespace Windows {
 
@@ -24,11 +26,11 @@ public:
   static HICON getIcon(int id) { return getIcon(Module::getInstance(), id); }
   static HICON getIcon(HINSTANCE hinstance, int id);
 
-  static HICON getIcon(int id, unsigned size) { return getIcon(Module::getInstance(), id, size); }
-  static HICON getIcon(HINSTANCE hinstance, int id, unsigned size);
+  static HICON getIcon(int id, Size size) { return getIcon(Module::getInstance(), id, size); }
+  static HICON getIcon(HINSTANCE hinstance, int id, Size size);
 
-  static HICON getIconMetric(int id) { return getIconMetric(Module::getInstance(), id); }
-  static HICON getIconMetric(HINSTANCE hinstance, int id);
+//  static Icon getIconMetric(int id, int lim) { return getIconMetric(Module::getInstance(), id, lim); }
+//  static Icon getIconMetric(HINSTANCE hinstance, int id, int lim);
 };
 
 } /* namespace Windows */

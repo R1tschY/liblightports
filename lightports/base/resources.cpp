@@ -30,19 +30,30 @@ HICON Resources::getIcon(HINSTANCE hinstance, int id)
   return win_throw_on_fail(LoadIcon(hinstance, MAKEINTRESOURCE(id)));
 }
 
-HICON Resources::getIcon(HINSTANCE hinstance, int id, unsigned size)
+HICON Resources::getIcon(HINSTANCE hinstance, int id, Size size)
 {
-  return (HICON)win_throw_on_fail(LoadImage(hinstance, MAKEINTRESOURCE(id), IMAGE_ICON, size, size, LR_SHARED));
+  return (HICON)win_throw_on_fail(
+      LoadImage(
+          hinstance,
+          MAKEINTRESOURCE(id),
+          IMAGE_ICON,
+          size.getWidth(), size.getHeight(),
+          LR_SHARED)
+      );
 }
 
-HICON Resources::getIconMetric(HINSTANCE hinstance, int id)
-{
-/*  HICON hicon;
-  win_throw_on_fail(LoadIconMetric(hinstance, MAKEINTRESOURCE(id), LIM_SMALL, &hicon));
-  return hicon;*/
-  return getIcon(hinstance, id);
-}
-
+//Icon Resources::getIconMetric(HINSTANCE hinstance, int id, int lim)
+//{
+//  HICON result;
+//  win_throw_on_fail(
+//    ::LoadIconMetric(
+//        hinstance,
+//        MAKEINTRESOURCE(id),
+//        lim,
+//        &result)
+//    );
+//  return result;
+//}
 
 } /* namespace Windows */
 
