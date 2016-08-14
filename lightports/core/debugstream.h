@@ -57,6 +57,11 @@ public:
     std::wostream(&buffer_)
   { }
 
+  ~DebugOutputStream()
+  {
+    buffer_.sync();
+  }
+
 private:
   DebugOutputBuffer buffer_;
 };

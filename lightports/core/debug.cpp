@@ -1,19 +1,23 @@
-#include "debug.h"
-
-#include <stdarg.h>
-#include <cerrno>  // für errno
-#include <cstdio>  // für printf
-#include <sstream>
-#include <codecvt>
-#include <locale>
-#include <wchar.h>
-#include <string>
 #include <cpp-utils/algorithm/length.h>
-#include <cpp-utils/assert.h>
 #include <cpp-utils/iostreams/small_stringstream.h>
-
-#include "memory.h"
-#include "exception.h"
+#include <cpp-utils/memory/unique_array.h>
+#include <debugapi.h>
+#include <errhandlingapi.h>
+#include <lightports/core/debug.h>
+#include <lightports/core/debugstream.h>
+#include <lightports/core/exception.h>
+#include <lightports/core/memory.h>
+#include <minwindef.h>
+#include <processthreadsapi.h>
+#include <stdarg.h>
+#include <wchar.h>
+#include <winbase.h>
+#include <winnt.h>
+#include <winuser.h>
+#include <codecvt>
+#include <experimental/string_view>
+#include <locale>
+#include <sstream>
 
 namespace Windows {
 
@@ -117,7 +121,7 @@ std::wstring getWindowsError(DWORD code)
   if (!error_string) {
     wchar_t buffer[64];
     cpp::small_owstringstream<64> stream;
-    stream << "Error code: " << code;
+    stream << L"Windows error code: " << code << L'\0';
     return stream.str();
   }
 
@@ -129,7 +133,7 @@ std::string getAsciiWindowsError(DWORD code)
   auto error_string = getErrorString(code, Language::Neutral);
   if (!error_string) {
     cpp::small_ostringstream<64> stream;
-    stream << "Error code: " << code;
+    stream << "Windows error code: " << code << '\0';
     return stream.str();
   }
 

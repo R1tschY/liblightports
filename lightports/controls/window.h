@@ -17,6 +17,14 @@ public:
     Control((DWORD)type, exstyle | WS_EX_LAYERED)
   { }
 
+  Window(cpp::wstring_view window_class, Type type, DWORD exstyle = 0) :
+    Control(window_class.data(), (DWORD)type, exstyle | WS_EX_LAYERED)
+  { }
+
+  Window(ATOM window_class, Type type, DWORD exstyle = 0) :
+    Control(window_class, (DWORD)type, exstyle | WS_EX_LAYERED)
+  { }
+
   void create(HWND parent, cpp::wstring_view title) {
     Control::create(parent, title, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT);
   }

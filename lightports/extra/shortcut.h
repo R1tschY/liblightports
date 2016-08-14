@@ -3,6 +3,8 @@
 #ifndef HOOKLIB_WINDOWS_SHORTCUT_H_
 #define HOOKLIB_WINDOWS_SHORTCUT_H_
 
+#include <tuple>
+
 namespace Windows {
 
 struct ShortCut
@@ -14,6 +16,12 @@ struct ShortCut
   explicit operator bool() const noexcept
   {
     return isValid();
+  }
+
+
+  bool operator==(const ShortCut& rhs)
+  {
+    return std::tie(modifiers, key) == std::tie(rhs.modifiers, rhs.key);
   }
 };
 

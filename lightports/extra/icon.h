@@ -17,7 +17,7 @@ public:
 private:
   struct HIconDeleter {
     typedef HICON pointer;
-    void operator()(HICON ptr) { DestroyIcon(ptr); }
+    void operator()(HICON ptr) { ::DestroyIcon(ptr); }
   };
   typedef std::unique_ptr<HICON, HIconDeleter> HIcon;
 
