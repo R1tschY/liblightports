@@ -5,6 +5,8 @@
 
 #include "../core/debug.h"
 #include "../core/macros.h"
+#include "../core/exception.h"
+#include "../core/debugstream.h"
 #include "../base/charcodecs.h"
 
 namespace Windows {
@@ -47,8 +49,8 @@ Application::Application(cpp::wstring_view name, HINSTANCE instance) :
   std::set_unexpected(Application_unexpected);
   std::set_terminate(Application_terminate);
 
-  mutex_.reset(CreateMutex(nullptr, false, name.data()));
-  DWORD error = GetLastError();
+  mutex_.reset(::CreateMutex(nullptr, false, name.data()));
+  DWORD error = ::GetLastError();
   if (!mutex_) {
     WIN_WARNING(L"cannot create application mutex: %s",
                 getWindowsError(error).c_str());
@@ -57,19 +59,38 @@ Application::Application(cpp::wstring_view name, HINSTANCE instance) :
   is_running_ = (error == ERROR_ALREADY_EXISTS);
 }
 
-int Application::run(ExecuteFunc entry) {
-  if (is_running_) return 0;
+int Application::run(ExecuteFunc unique_entry, ExecuteFunc duplicate_entry)
+{
+  if (is_running_)
+  {
+    if (duplicate_entry)
+      return runSafe(duplicate_entry, 1);
+    else
+      return 0;
+  }
   is_running_ = true;
 
-  try {
-    return entry();
-  } catch (const std::exception& e) {
-    WIN_ERROR(L"uncatched exception: %ls", to_wstring(e.what()).c_str());
-  } catch (...) {
-    WIN_ERROR(L"uncatched exception!");
-  }
+  return runSafe(unique_entry, 1);
+}
 
-  return 0;
+void Application::handleException()
+{
+  try
+  {
+    throw;
+  }
+  catch (const Windows::Exception& e)
+  {
+    DebugOutputStream() << L"Windows exception '" << e.what() << "' @" << e.getSourceCodeFile() << ":" << e.getSourceCodeLine() << std::endl;
+  }
+  catch (const std::exception& e)
+  {
+    DebugOutputStream() << L"uncatched exception: " << e.what();
+  }
+  catch (...)
+  {
+    DebugOutputStream() << L"uncatched exception.";
+  }
 }
 
 int Application::processMessages()
@@ -81,6 +102,14 @@ int Application::processMessages()
     DispatchMessage(&msg);
   }
   return (int) msg.wParam;
+}
+
+HINSTANCE Application::getInstance()
+{
+  if (instance_)
+    return self().appinstance_;
+
+  return ::GetModuleHandle(NULL);
 }
 
 bool Application::is64BitWindows()

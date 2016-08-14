@@ -25,10 +25,10 @@ public:
   Application(cpp::wstring_view name, HINSTANCE instance);
 
   // run
-  int run(ExecuteFunc entry);
+  int run(ExecuteFunc unique_entry, ExecuteFunc duplicate_entry = ExecuteFunc());
 
   // application properties
-  static HINSTANCE getInstance() { return self().appinstance_; }
+  static HINSTANCE getInstance();
   static cpp::wstring_view getName() { return self().name_; }
 
   // paths
@@ -44,6 +44,35 @@ public:
 
   // messages
   static int processMessages();
+
+  template<typename Func>
+  static void runSafe(Func&& func)
+  {
+    try
+    {
+      func();
+    }
+    catch (...)
+    {
+      handleException();
+    }
+  }
+
+  template<typename Func, typename T>
+  static T runSafe(Func&& func, T valueIfCatched)
+  {
+    try
+    {
+      return func();
+    }
+    catch (...)
+    {
+      handleException();
+      return std::move(valueIfCatched);
+    }
+  }
+
+  static void handleException();
 
 private:
   Handle mutex_;
