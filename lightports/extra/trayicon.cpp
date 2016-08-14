@@ -4,6 +4,8 @@
 #include <windowsx.h>
 #include <cpp-utils/algorithm/length.h>
 #include "../base/application.h"
+#include <lightports/extra/systeminformation.h>
+#include <lightports/base/resources.h>
 
 namespace Windows {
 
@@ -11,66 +13,108 @@ int TrayIcon::LastId = 0;
 
 TrayIcon::TrayIcon():
   added_(false)
-{}
+{
+  trayicon_.uFlags = 0;
+}
 
-void
-TrayIcon::add(HWND hwnd, const Icon& icon, cpp::wstring_view tooltip) {
-    trayicon_.cbSize = sizeof(NOTIFYICONDATAW);
+void TrayIcon::add(HWND hwnd)
+{
+  if (added_)
+    return;
+
+  trayicon_.cbSize           = sizeof(NOTIFYICONDATAW);
 #if (WINVER < 0x0600)
-    trayicon_.uVersion         = NOTIFYICON_VERSION;
-    trayicon_.uFlags           = NIF_MESSAGE | NIF_ICON | NIF_TIP;
+  trayicon_.uVersion         = NOTIFYICON_VERSION;
+  trayicon_.uFlags           |= NIF_MESSAGE;
 #else
-    trayicon_.uVersion         = NOTIFYICON_VERSION_4;
-    trayicon_.uFlags           = NIF_MESSAGE | NIF_ICON | NIF_TIP | NIF_SHOWTIP;
+  trayicon_.uVersion         = NOTIFYICON_VERSION_4;
+  trayicon_.uFlags           |= NIF_MESSAGE;
 #endif
-    trayicon_.hWnd             = hwnd;
-    trayicon_.uID              = ++LastId;
-    trayicon_.uCallbackMessage = MessageId;
-    trayicon_.hIcon            = icon.getHICON();
+  trayicon_.hWnd             = hwnd;
+  trayicon_.uID              = ++LastId;
+  trayicon_.uCallbackMessage = MessageId;
 
-    tooltip.copy(trayicon_.szTip, cpp::length(trayicon_.szTip));
+  Shell_NotifyIconW(NIM_ADD, &trayicon_);
+  Shell_NotifyIconW(NIM_SETVERSION, &trayicon_);
 
-    Shell_NotifyIconW(NIM_ADD, &trayicon_);
-    Shell_NotifyIconW(NIM_SETVERSION, &trayicon_);
-
-    added_ = true;
+  trayicon_.uFlags = 0;
+  added_ = true;
 }
 
 void
-TrayIcon::remove() {
-  added_ = false;
+TrayIcon::remove()
+{
+  if (!added_)
+    return;
+
   Shell_NotifyIconW(NIM_DELETE, &trayicon_);
+
+  trayicon_.uFlags = 0;
+  added_ = false;
 }
 
-TrayIcon::~TrayIcon(void) {
-  if (added_) {
-    remove();
-  }
+TrayIcon::~TrayIcon()
+{
+  remove();
 }
 
-void
-TrayIcon::setToolTip(cpp::wstring_view src) {
+template<std::size_t N>
+static void copy_to(cpp::wstring_view src, wchar_t (&dest)[N])
+{
+  auto size = src.copy(dest, N - 1);
+  dest[size] = '\0';
+}
+
+void TrayIcon::setToolTip(cpp::wstring_view src)
+{
 #if (WINVER < 0x0600)
-  trayicon_.uFlags = NIF_TIP;
+  trayicon_.uFlags |= NIF_TIP;
 #else
-  trayicon_.uFlags = NIF_TIP | NIF_SHOWTIP;
+  trayicon_.uFlags |= NIF_TIP | NIF_SHOWTIP;
 #endif
-  src.copy(trayicon_.szTip, cpp::length(trayicon_.szTip));
-  Shell_NotifyIconW(NIM_MODIFY, &trayicon_);
+  copy_to(src, trayicon_.szTip);
+
+  update();
 }
 
-void
-TrayIcon::showBalloon(cpp::wstring_view title, cpp::wstring_view msg, SystemIcon icontype) {
+void TrayIcon::showBalloon(cpp::wstring_view title, cpp::wstring_view msg, SystemIcon icontype)
+{
 #if (WINVER < 0x0600)
-  trayicon_.uFlags = NIF_INFO;
+  trayicon_.uFlags |= NIF_INFO;
 #else
-  trayicon_.uFlags = NIF_INFO | NIF_SHOWTIP;
+  trayicon_.uFlags |= NIF_INFO | NIF_SHOWTIP;
 #endif
   trayicon_.dwInfoFlags = static_cast<int>(icontype);
-  title.copy(trayicon_.szInfoTitle, cpp::length(trayicon_.szInfoTitle));
-  msg.copy(trayicon_.szInfo, cpp::length(trayicon_.szInfo));
+  copy_to(title, trayicon_.szInfoTitle);
+  copy_to(msg, trayicon_.szInfo);
+
+  update();
+}
+
+void TrayIcon::setIcon(int resource_id)
+{
+  setIcon(
+    Resources::getIcon(
+      Application::getInstance(),
+      resource_id,
+      SystemMetrics::getDefaultSmallIconSize()));
+}
+
+void TrayIcon::setIcon(HICON icon)
+{
+  trayicon_.uFlags |= NIF_ICON;
+  trayicon_.hIcon = icon;
+
+  update();
+}
+
+void TrayIcon::update()
+{
+  if (!added_)
+    return;
 
   Shell_NotifyIconW(NIM_MODIFY, &trayicon_);
+  trayicon_.uFlags = 0;
 }
 
 LRESULT TrayIcon::handleMessage(WPARAM wparam, LPARAM lparam, MessageHandler handler)
@@ -96,13 +140,6 @@ LRESULT TrayIcon::handleMessage(WPARAM wparam, LPARAM lparam, MessageHandler han
 #endif
 
   return handler(msg, x, y);
-}
-
-void TrayIcon::setIcon(const Icon& icon)
-{
-  trayicon_.uFlags = NIF_ICON;
-  trayicon_.hIcon = icon.getHICON();
-  Shell_NotifyIconW(NIM_MODIFY, &trayicon_);
 }
 
 } // namespace Windows

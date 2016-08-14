@@ -11,6 +11,10 @@
 
 namespace Windows {
 
+///
+/// \sa
+/// https://msdn.microsoft.com/en-us/library/cc144179(v=vs.85).aspx
+/// https://msdn.microsoft.com/en-us/library/ee330740(v=vs.85).aspx
 class TrayIcon {
   DISALLOW_COPY_AND_ASSIGN(TrayIcon);
 
@@ -28,10 +32,12 @@ public:
   TrayIcon();
   ~TrayIcon();
 
-  void add(HWND hwnd, const Icon& icon, cpp::wstring_view tooltip);
+  void add(HWND hwnd);
   void remove();
 
-  void setIcon(const Icon& icon);
+  void setIcon(const Icon& icon) { setIcon(icon.getHICON()); }
+  void setIcon(int resource_id);
+  void setIcon(HICON icon);
   void setToolTip(cpp::wstring_view src);
   void showBalloon(cpp::wstring_view title,
                    cpp::wstring_view msg,
@@ -44,6 +50,8 @@ private:
   bool added_;
 
   static int LastId;
+
+  void update();
 };
 
 } // namespace Windows
