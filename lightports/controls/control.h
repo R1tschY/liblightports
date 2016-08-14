@@ -1,17 +1,19 @@
 #ifndef CONTROL_H
 #define CONTROL_H
 
-#include <memory>
-#include <string>
-
-#include <windows.h>
-#include <cpp-utils/strings/string_view.h>
 #include <cpp-utils/assert.h>
 #include <cpp-utils/iterator_range.h>
-#include "../core/macros.h"
-#include "../core/geometry.h"
-#include "../core/debug.h"
-#include "../core/exception.h"
+#include <cpp-utils/strings/string_view.h>
+#include <lightports/core/debug.h>
+#include <lightports/core/debugstream.h>
+#include <lightports/core/exception.h>
+#include <lightports/core/geometry.h>
+#include <lightports/core/macros.h>
+#include <windows.h>
+#include <iostream>
+#include <iterator>
+#include <memory>
+#include <string>
 
 namespace Windows {
 
@@ -28,6 +30,8 @@ public:
 
   bool operator==(FindWindowIteratorSentinel) { return hwnd_ == nullptr; }
   bool operator==(FindWindowIterator& iter) { return hwnd_ == iter.hwnd_; }
+  bool operator!=(FindWindowIteratorSentinel) { return hwnd_ != nullptr; }
+  bool operator!=(FindWindowIterator& iter) { return hwnd_ != iter.hwnd_; }
 
   FindWindowIterator& operator++()
   {
@@ -112,8 +116,6 @@ public:
     return rc;
   }
 
-  static const std::wstring& getWindowClassName();
-
   bool okay() const {
     return bool(handle_);
   }
@@ -169,6 +171,8 @@ public:
       );
   }
 
+  static std::wstring getClassName(HWND hwnd);
+
 private:
 
   struct ControlDeleter {
@@ -188,13 +192,13 @@ private:
   DWORD exstyle_ = 0;
 
   static ATOM getWindowClass();
+  static const std::wstring& getWindowClassName();
 
   static LRESULT CALLBACK MessageEntry(
       HWND handle,
       UINT msg,
       WPARAM wparam,
       LPARAM lparam);
-
 
 protected:
   // hooks

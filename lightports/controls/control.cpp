@@ -1,10 +1,8 @@
 #include "control.h"
 
-#include "../base/application.h"
-#include "../core/debug.h"
-#include "../core/exception.h"
-#include <cpp-utils/algorithm/zero.h>
-#include <cpp-utils/assert.h>
+#include <lightports/base/application.h>
+#include <cpp-utils/likely.h>
+#include <algorithm>
 
 
 namespace Windows {
@@ -21,8 +19,7 @@ ATOM Control::registerClass(
     cpp::wstring_view menu,
     HICON small_icon)
 {
-  WNDCLASSEX wcex;
-  cpp::zero(wcex);
+  WNDCLASSEX wcex = { };
 
   wcex.cbSize        = sizeof(WNDCLASSEX);
   wcex.style		     = style;
@@ -94,6 +91,8 @@ void Control::create(
     int x, int y, int width, int height)
 {
   cpp_assert(!handle_);
+
+  // handle_ is set in Control::MessageEntry
   win_throw_on_fail(CreateWindowExW(
         // Optional window styles
         exstyle_,
@@ -152,6 +151,14 @@ void Control::setPosition(const Rectangle& rect)
                       SWP_NOACTIVATE | SWP_NOZORDER));
 }
 
+std::wstring Control::getClassName(HWND hwnd)
+{
+  wchar_t buffer[1024]; // TODO
+  int chars = ::GetClassNameW(hwnd, buffer, cpp::length(buffer));
+  win_print_on_fail(chars > 0);
+  return std::wstring(buffer, chars);
+}
+
 //
 // message handling
 
@@ -183,10 +190,13 @@ void Control::onCreate()
 void Control::onDestroy()
 { }
 
-LRESULT CALLBACK Control::MessageEntry(HWND handle, UINT msg, WPARAM wparam, LPARAM lparam) {
+LRESULT CALLBACK Control::MessageEntry(HWND handle, UINT msg, WPARAM wparam, LPARAM lparam)
+{
   auto window = reinterpret_cast<Control*>(GetWindowLongPtr(handle, GWLP_USERDATA));
-  if (!window) {
-    if (msg == WM_NCCREATE) {
+  if (cpp_unlikely(!window))
+  {
+    if (cpp_likely(msg == WM_NCCREATE))
+    {
       auto create_struct = reinterpret_cast<CREATESTRUCT*>(lparam);
       window = static_cast<Control*>(create_struct->lpCreateParams);
       cpp_assert(window);
@@ -195,13 +205,13 @@ LRESULT CALLBACK Control::MessageEntry(HWND handle, UINT msg, WPARAM wparam, LPA
       window->handle_.reset(handle);
     }
 
-    if (!window)
+    if (cpp_unlikely(!window))
     {
       return DefWindowProc(handle, msg, wparam, lparam);
     }
   }
 
-  return window->onMessage(msg, wparam, lparam);
+  return Application::runSafe([=](){ return window->onMessage(msg, wparam, lparam); }, 0);
 }
 
 } // namespace Windows
