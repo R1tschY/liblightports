@@ -11,15 +11,19 @@ namespace Windows {
 class MessageSink : protected Control
 {
 public:
-  typedef std::function<LRESULT(HWND, UINT, WPARAM, LPARAM)> MessageFunc;
+  explicit MessageSink();
 
-  explicit MessageSink(MessageFunc wndproc = nullptr);
+  explicit MessageSink(const wchar_t* window_class) :
+    Control(window_class, WS_POPUP, WS_EX_TOOLWINDOW)
+  { }
+
+  explicit MessageSink(ATOM window_class) :
+    Control(window_class, WS_POPUP, WS_EX_TOOLWINDOW)
+  { }
 
   void create(cpp::wstring_view name = L"MessageSink");
 
   HWND getNativeHandle() { return Control::getNativeHandle(); }
-
-  LRESULT onMessage(UINT msg, WPARAM wparam, LPARAM lparam) override;
 
   using Control::getNativeHandle;
   using Control::destroy;
@@ -35,9 +39,6 @@ public:
   {
     return Control::findAll(HWND_MESSAGE, class_name, window_name);
   }
-
-private:
-  MessageFunc wndproc_;
 };
 
 } // namespace Windows

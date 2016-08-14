@@ -1,7 +1,12 @@
 #include "messagesink.h"
 
-#include <windows.h>
+#include <cpp-utils/preprocessor.h>
 #include <cpp-utils/strings/string_literal.h>
+#include <cpp-utils/strings/string_view.h>
+#include <minwindef.h>
+#include <windef.h>
+#include <winuser.h>
+#include <experimental/string_view>
 
 namespace Windows {
 
@@ -17,25 +22,13 @@ static ATOM getMessageSinkClass() {
   return window_class;
 }
 
-MessageSink::MessageSink(MessageFunc wndproc) :
-  Control(getMessageSinkClass(), WS_POPUP, WS_EX_TOOLWINDOW),
-  wndproc_(wndproc)
-{
-}
+MessageSink::MessageSink() :
+  Control(getMessageSinkClass(), WS_POPUP, WS_EX_TOOLWINDOW)
+{ }
 
 void MessageSink::create(cpp::wstring_view name)
 {
   Control::create(HWND_MESSAGE, name, 0, 0, 0, 0);
 }
-
-LRESULT MessageSink::onMessage(UINT msg, WPARAM wparam, LPARAM lparam)
-{
-  if (wndproc_) {
-    return wndproc_(getNativeHandle(), msg, wparam, lparam);
-  }
-
-  return Control::onMessage(msg, wparam, lparam);
-}
-
 
 } // namespace Windows
