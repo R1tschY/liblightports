@@ -109,6 +109,10 @@ public:
     return handle_.get();
   }
 
+  HWND getHWND() const {
+    return handle_.get();
+  }
+
   Rectangle getClientRect() const {
     RECT rc;
     cpp_assert(handle_);
@@ -172,6 +176,7 @@ public:
   }
 
   static std::wstring getClassName(HWND hwnd);
+  static std::wstring getWindowText(HWND hwnd);
 
 private:
 

@@ -159,6 +159,14 @@ std::wstring Control::getClassName(HWND hwnd)
   return std::wstring(buffer, chars);
 }
 
+std::wstring Control::getWindowText(HWND hwnd)
+{
+  wchar_t buffer[1024]; // TODO
+  int chars = ::GetWindowTextW(hwnd, buffer, cpp::length(buffer));
+  win_print_on_fail(chars > 0);
+  return std::wstring(buffer, chars);
+}
+
 //
 // message handling
 
