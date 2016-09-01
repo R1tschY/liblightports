@@ -5,6 +5,7 @@
 #include <utility>
 
 #include <cpp-utils/algorithm/zero.h>
+#include <cpp-utils/strings/string_view.h>
 
 namespace Windows {
 
@@ -46,154 +47,159 @@ private:
   MENUITEMINFO data_;
 };
 
-class Menu {
+struct HMenuDeleter {
+  typedef HMENU pointer;
+  void operator()(HMENU ptr) { DestroyMenu(ptr); }
+};
+
+template<typename DataContainer>
+class MenuBase {
 public:
-  Menu() :
+  MenuBase() :
     hmenu_()
   { }
 
-  Menu(HMENU handle) :
+  explicit MenuBase(HMENU handle) :
     hmenu_(handle)
   { }
 
-  static bool isMenu(HMENU handle) { return IsMenu(handle); }
-
-  // get menus
-  static Menu getMainMenu(HWND hwnd) { return Menu(GetMenu(hwnd)); }
-
-  /// \brief gets a copy of the system menu of \p hwnd
-  static Menu getSystemMenu(HWND hwnd) { return Menu(GetSystemMenu(hwnd, FALSE)); }
-
-  // create menus
-  static Menu createMenu() { return Menu(CreateMenu()); }
-  static Menu createPopupMenu() { return Menu(CreatePopupMenu()); }
-  
   // properties
 
-  bool okay() const { return IsMenu(hmenu_.get()); }
+  bool okay() const { return getHMENU() != nullptr && ::IsMenu(getHMENU()); }
   explicit operator bool() const { return okay(); }
 
   // collection
 
   bool existsEntry(unsigned command) const
   {
-    return GetMenuState(hmenu_.get(), command, MF_BYCOMMAND) != -1;
+    return ::GetMenuState(getHMENU(), command, MF_BYCOMMAND) != UINT(-1);
   }
 
   // modify menus
 
-  void addMenu(const std::wstring& caption, const Menu& submenu, MenuEntryFlags flags = MenuEntryFlags::Enabled)
+  void addMenu(cpp::wstring_view caption, const MenuBase& submenu, MenuEntryFlags flags = MenuEntryFlags::Enabled)
   {
-    ::AppendMenuW(hmenu_.get(), MF_STRING | MF_POPUP | static_cast<int>(flags), reinterpret_cast<UINT_PTR>(submenu.hmenu_.get()), caption.c_str());
+    ::AppendMenuW(getHMENU(), MF_STRING | MF_POPUP | static_cast<int>(flags), reinterpret_cast<UINT_PTR>(submenu.hmenu_.get()), caption.data());
   }
 
-  void addEntry(unsigned command, const std::wstring& caption, MenuEntryFlags flags = MenuEntryFlags::Enabled)
+  void addEntry(unsigned command, cpp::wstring_view caption, MenuEntryFlags flags = MenuEntryFlags::Enabled)
   {
-    ::AppendMenuW(hmenu_.get(), MF_STRING | static_cast<int>(flags), command, caption.c_str());
+    ::AppendMenuW(getHMENU(), MF_STRING | static_cast<int>(flags), command, caption.data());
   }
 
-  void insertEntry(unsigned position, unsigned command, const std::wstring& caption, MenuEntryFlags flags = MenuEntryFlags::Enabled)
+  void insertEntry(unsigned position, unsigned command, cpp::wstring_view caption, MenuEntryFlags flags = MenuEntryFlags::Enabled)
   {
-    ::InsertMenuW(hmenu_.get(), position, MF_BYPOSITION | MF_STRING | static_cast<int>(flags), command, caption.c_str());
+    ::InsertMenuW(getHMENU(), position, MF_BYPOSITION | MF_STRING | static_cast<int>(flags), command, caption.data());
   }
 
-  void insertEntryBefore(unsigned entry_command, unsigned command, const std::wstring& caption, MenuEntryFlags flags = MenuEntryFlags::Enabled)
+  void insertEntryBefore(unsigned entry_command, unsigned command, cpp::wstring_view caption, MenuEntryFlags flags = MenuEntryFlags::Enabled)
   {
-    ::InsertMenuW(hmenu_.get(), entry_command, MF_BYCOMMAND | MF_STRING | static_cast<int>(flags), command, caption.c_str());
+    ::InsertMenuW(getHMENU(), entry_command, MF_BYCOMMAND | MF_STRING | static_cast<int>(flags), command, caption.data());
   }
 
   void insertEntry(unsigned position, const MenuItemInfo& item)
   {
-    ::InsertMenuItemW(hmenu_.get(), position, true, &item.getMENUITEMINFO());
+    ::InsertMenuItemW(getHMENU(), position, true, &item.getMENUITEMINFO());
   }
 
   void insertEntryBefore(unsigned entry_command, const MenuItemInfo& item)
   {
-    ::InsertMenuItemW(hmenu_.get(), entry_command, false, &item.getMENUITEMINFO());
+    ::InsertMenuItemW(getHMENU(), entry_command, false, &item.getMENUITEMINFO());
   }
 
   void addSeperator()
   {
-    ::AppendMenuW(hmenu_.get(), MF_SEPARATOR, 0, nullptr);
+    ::AppendMenuW(getHMENU(), MF_SEPARATOR, 0, nullptr);
   }
 
-  void insertSeperator(unsigned position)
+  void insertSeperator(unsigned position, unsigned sep_command = 0)
   {
-    ::InsertMenuW(hmenu_.get(), position, MF_BYPOSITION | MF_SEPARATOR, 0, nullptr);
+    ::InsertMenuW(getHMENU(), position, MF_BYPOSITION | MF_SEPARATOR, sep_command, nullptr);
   }
 
-  void insertSeperatorBefore(unsigned entry_command)
+  void insertSeperatorBefore(unsigned entry_command, unsigned sep_command = 0)
   {
-    ::InsertMenuW(hmenu_.get(), entry_command, MF_BYCOMMAND | MF_SEPARATOR, 0, nullptr);
+    ::InsertMenuW(getHMENU(), entry_command, MF_BYCOMMAND | MF_SEPARATOR, sep_command, nullptr);
   }
 
   bool isEntryChecked(unsigned command) const
   {
-    return GetMenuState(hmenu_.get(), command, MF_BYCOMMAND) & MF_CHECKED;      
+    return GetMenuState(getHMENU(), command, MF_BYCOMMAND) & MF_CHECKED;
   }
 
-  void modifyEntry(unsigned command, const std::wstring& caption, MenuEntryFlags flags = MenuEntryFlags::Enabled)
+  void modifyEntry(unsigned command, cpp::wstring_view caption, MenuEntryFlags flags = MenuEntryFlags::Enabled)
   {
-    ::ModifyMenuW(hmenu_.get(), command, MF_BYCOMMAND | MF_STRING | static_cast<int>(flags), command, caption.c_str());
+    ::ModifyMenuW(getHMENU(), command, MF_BYCOMMAND | MF_STRING | static_cast<int>(flags), command, caption.data());
   }
 
-  void modifyEntry(unsigned command, unsigned new_command, const std::wstring& caption, MenuEntryFlags flags = MenuEntryFlags::Enabled)
+  void modifyEntry(unsigned command, unsigned new_command, cpp::wstring_view caption, MenuEntryFlags flags = MenuEntryFlags::Enabled)
   {
-    ::ModifyMenuW(hmenu_.get(), command, MF_BYCOMMAND | MF_STRING | static_cast<int>(flags), new_command, caption.c_str());
+    ::ModifyMenuW(getHMENU(), command, MF_BYCOMMAND | MF_STRING | static_cast<int>(flags), new_command, caption.data());
   }
 
-  void modifyEntryAt(unsigned position, unsigned command, const std::wstring& caption, MenuEntryFlags flags = MenuEntryFlags::Enabled)
+  void modifyEntryAt(unsigned position, unsigned command, cpp::wstring_view caption, MenuEntryFlags flags = MenuEntryFlags::Enabled)
   {
-    ::ModifyMenuW(hmenu_.get(), position, MF_BYPOSITION | MF_STRING | static_cast<int>(flags), command, caption.c_str());
+    ::ModifyMenuW(getHMENU(), position, MF_BYPOSITION | MF_STRING | static_cast<int>(flags), command, caption.data());
   }
 
   void check(unsigned command, bool value)
   {
-    CheckMenuItem(hmenu_.get(), command, MF_BYCOMMAND | (value ? MF_CHECKED : MF_UNCHECKED));
+    CheckMenuItem(getHMENU(), command, MF_BYCOMMAND | (value ? MF_CHECKED : MF_UNCHECKED));
   }
 
   void checkAt(unsigned position, bool value)
   {
-    CheckMenuItem(hmenu_.get(), position, MF_BYPOSITION | (value ? MF_CHECKED : MF_UNCHECKED));
+    CheckMenuItem(getHMENU(), position, MF_BYPOSITION | (value ? MF_CHECKED : MF_UNCHECKED));
   }
 
   void enable(unsigned command, bool value, bool grayed = false)
   {
-    EnableMenuItem(hmenu_.get(), command, MF_BYCOMMAND | (value ? MF_ENABLED : (grayed) ? MF_GRAYED : MF_DISABLED));
+    EnableMenuItem(getHMENU(), command, MF_BYCOMMAND | (value ? MF_ENABLED : (grayed) ? MF_GRAYED : MF_DISABLED));
   }
 
   void enableAt(unsigned position, bool value, bool grayed = false)
   {
-    EnableMenuItem(hmenu_.get(), position, MF_BYPOSITION | (value ? MF_ENABLED : (grayed) ? MF_GRAYED : MF_DISABLED));
+    EnableMenuItem(getHMENU(), position, MF_BYPOSITION | (value ? MF_ENABLED : (grayed) ? MF_GRAYED : MF_DISABLED));
   }
 
   void deleteEntry(unsigned command)
   {
-    ::DeleteMenu(hmenu_.get(), command, MF_BYCOMMAND);
+    ::DeleteMenu(getHMENU(), command, MF_BYCOMMAND);
   }
 
   void deleteEntryAt(unsigned position)
   {
-    ::DeleteMenu(hmenu_.get(), position, MF_BYPOSITION);
+    ::DeleteMenu(getHMENU(), position, MF_BYPOSITION);
   }
-
-  // utils
-
-  /// \brief resets the system menu to the default state
-  static void resetSystemMenu(HWND hwnd) { GetSystemMenu(hwnd, TRUE); }
 
   // native handle
 
-  HMENU getHMENU() const { return hmenu_.get(); }
+  HMENU getHMENU() const { return &*hmenu_; }
 
 private:
-  struct HMenuDeleter {
-    typedef HMENU pointer;
-    void operator()(HMENU ptr) { DestroyMenu(ptr); }
-  };
-
-  std::unique_ptr<HMENU, HMenuDeleter> hmenu_;
+  DataContainer hmenu_;
 };
+
+using Menu = MenuBase<std::unique_ptr<HMENU, HMenuDeleter>>;
+using MenuView = MenuBase<HMENU>;
+
+inline
+bool isMenu(HMENU handle) { return IsMenu(handle); }
+
+// get menus
+inline
+MenuView getMainMenu(HWND hwnd) { return MenuView(GetMenu(hwnd)); }
+
+/// \brief gets a copy of the system menu of \p hwnd
+inline
+MenuView getSystemMenu(HWND hwnd) { return MenuView(GetSystemMenu(hwnd, FALSE)); }
+
+// create menus
+inline Menu createMenu() { return Menu(CreateMenu()); }
+inline Menu createPopupMenu() { return Menu(CreatePopupMenu()); }
+
+/// \brief resets the system menu to the default state
+inline void resetSystemMenu(HWND hwnd) { GetSystemMenu(hwnd, true); }
 
 } // namespace Windows
 
