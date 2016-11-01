@@ -12,7 +12,7 @@ namespace Windows {
 
 static ATOM getMessageSinkClass() {
   static ATOM window_class = Control::registerClass(
-                               wstring_literal("MessageSink"),
+                               L"MessageSink",
                                0,
                                0,
                                0,

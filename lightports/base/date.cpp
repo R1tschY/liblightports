@@ -26,11 +26,11 @@ std::wstring getDate(cpp::wstring_view format, tm* time) {
   return std::wstring(buffer);
 }
 
-static cpp::wstring_view mouths[12] = {
-    wstring_literal("Jan"), wstring_literal("Feb"), wstring_literal("Mar"),
-    wstring_literal("Apr"), wstring_literal("May"), wstring_literal("Jun"),
-    wstring_literal("Jul"), wstring_literal("Aug"), wstring_literal("Sep"),
-    wstring_literal("Oct"), wstring_literal("Nov"), wstring_literal("Dec")
+static const cpp::wstring_view mouths[12] = {
+    L"Jan", L"Feb", L"Mar",
+    L"Apr", L"May", L"Jun",
+    L"Jul", L"Aug", L"Sep",
+    L"Oct", L"Nov", L"Dec"
 };
 bool getCTime(cpp::wstring_view ctime, tm* desttime) {
   const wchar_t* p = ctime.data();
