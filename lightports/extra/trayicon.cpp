@@ -125,21 +125,17 @@ LRESULT TrayIcon::handleMessage(WPARAM wparam, LPARAM lparam, MessageHandler han
     return 0;
 
   UINT msg = lparam;
-  POINT pt;
-  GetCursorPos(&pt);
-  int x = pt.x;
-  int y = pt.y;
+  Point pt = getCursorPosition();
 #else
   int id = HIWORD(lparam);
   if (id != trayicon_.uID)
     return 0;
 
   UINT msg = LOWORD(lparam);
-  int x = GET_X_LPARAM(wparam);
-  int y = GET_Y_LPARAM(wparam);
+  Point pt(GET_X_LPARAM(wparam), GET_Y_LPARAM(wparam));
 #endif
 
-  return handler(msg, x, y);
+  return handler(msg, pt);
 }
 
 } // namespace Windows

@@ -7,6 +7,7 @@
 #include <functional>
 
 #include "../core/macros.h"
+#include "../core/geometry.h"
 #include "icon.h"
 
 namespace Windows {
@@ -26,8 +27,8 @@ public:
     Error   = NIIF_ERROR
   };
 
-  static const unsigned int MessageId = WM_USER + 21;
-  using MessageHandler = std::function<int(UINT,int,int)>;
+  static const unsigned int MessageId = WM_APP + 21;
+  using MessageHandler = std::function<int(UINT,Point)>;
 
   TrayIcon();
   ~TrayIcon();
