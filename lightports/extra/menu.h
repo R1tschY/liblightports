@@ -7,6 +7,8 @@
 #include <cpp-utils/algorithm/zero.h>
 #include <cpp-utils/strings/string_view.h>
 
+#include "../core/geometry.h"
+
 namespace Windows {
 
 enum class MenuEntryFlags {
@@ -23,14 +25,17 @@ MenuEntryFlags operator|(MenuEntryFlags a, MenuEntryFlags b)
     return static_cast<MenuEntryFlags>(static_cast<int>(a) | static_cast<int>(b));
 }
 
-class MenuItemInfo
+class MenuItem
 {
 public:
-  MenuItemInfo()
+  MenuItem()
   {
-    cpp::zero(data_);
     data_.cbSize = sizeof(MENUITEMINFO);
   }
+
+  MenuItem(const MENUITEMINFO& menu_item)
+  : data_(menu_item)
+  { }
 
   void setState(UINT value)
   {
@@ -38,17 +43,33 @@ public:
     data_.fState = value;
   }
 
+  void setText(cpp::wstring_view text)
+  {
+    data_.fMask |= MIIM_FTYPE | MIIM_STRING;
+    data_.fType |= MFT_STRING;
+
+    text_.assign(text.begin(), text.end());
+    data_.dwTypeData = const_cast<wchar_t*>(text_.c_str());
+    data_.cch = text_.size();
+  }
+
+  const std::wstring& getText() const { return text_; }
+
+
+
+
+
   // TODO
 
   const MENUITEMINFO& getMENUITEMINFO() const { return data_; }
   MENUITEMINFO& getMENUITEMINFO() { return data_; }
 
 private:
-  MENUITEMINFO data_;
+  MENUITEMINFO data_ = { };
+  std::wstring text_;
 };
 
 struct HMenuDeleter {
-  typedef HMENU pointer;
   void operator()(HMENU ptr) { DestroyMenu(ptr); }
 };
 
@@ -97,12 +118,12 @@ public:
     ::InsertMenuW(getHMENU(), entry_command, MF_BYCOMMAND | MF_STRING | static_cast<int>(flags), command, caption.data());
   }
 
-  void insertEntry(unsigned position, const MenuItemInfo& item)
+  void insertEntry(unsigned position, const MenuItem& item)
   {
     ::InsertMenuItemW(getHMENU(), position, true, &item.getMENUITEMINFO());
   }
 
-  void insertEntryBefore(unsigned entry_command, const MenuItemInfo& item)
+  void insertEntryBefore(unsigned entry_command, const MenuItem& item)
   {
     ::InsertMenuItemW(getHMENU(), entry_command, false, &item.getMENUITEMINFO());
   }
@@ -142,22 +163,22 @@ public:
     ::ModifyMenuW(getHMENU(), position, MF_BYPOSITION | MF_STRING | static_cast<int>(flags), command, caption.data());
   }
 
-  void check(unsigned command, bool value)
+  void check(unsigned command, bool value = true)
   {
     CheckMenuItem(getHMENU(), command, MF_BYCOMMAND | (value ? MF_CHECKED : MF_UNCHECKED));
   }
 
-  void checkAt(unsigned position, bool value)
+  void checkAt(unsigned position, bool value = true)
   {
     CheckMenuItem(getHMENU(), position, MF_BYPOSITION | (value ? MF_CHECKED : MF_UNCHECKED));
   }
 
-  void enable(unsigned command, bool value, bool grayed = false)
+  void enable(unsigned command, bool value = true, bool grayed = false)
   {
     EnableMenuItem(getHMENU(), command, MF_BYCOMMAND | (value ? MF_ENABLED : (grayed) ? MF_GRAYED : MF_DISABLED));
   }
 
-  void enableAt(unsigned position, bool value, bool grayed = false)
+  void enableAt(unsigned position, bool value = true, bool grayed = false)
   {
     EnableMenuItem(getHMENU(), position, MF_BYPOSITION | (value ? MF_ENABLED : (grayed) ? MF_GRAYED : MF_DISABLED));
   }
@@ -180,8 +201,16 @@ private:
   DataContainer hmenu_;
 };
 
-using Menu = MenuBase<std::unique_ptr<HMENU, HMenuDeleter>>;
-using MenuView = MenuBase<HMENU>;
+using Menu = MenuBase<std::unique_ptr<typename std::remove_pointer<HMENU>::type, HMenuDeleter>>;
+
+class MenuView : public MenuBase<HMENU>
+{
+  using Base = MenuBase<HMENU>;
+public:
+  using Base::Base;
+
+  MenuView(const Menu& menu) : MenuBase<HMENU>(menu.getHMENU()) { }
+};
 
 inline
 bool isMenu(HMENU handle) { return IsMenu(handle); }
@@ -200,6 +229,13 @@ inline Menu createPopupMenu() { return Menu(CreatePopupMenu()); }
 
 /// \brief resets the system menu to the default state
 inline void resetSystemMenu(HWND hwnd) { GetSystemMenu(hwnd, true); }
+
+inline void openPopupMenu(MenuView menu, Point pt, HWND window)
+{
+  ::TrackPopupMenu(menu.getHMENU(),
+      TPM_LEFTALIGN | TPM_RIGHTBUTTON,
+      pt.getX(), pt.getY(), 0, window, nullptr);
+}
 
 } // namespace Windows
 
