@@ -1,6 +1,8 @@
 
 # TODO
 
+* remove MouseHook staff
+
 ## debug
 
 * Stracktrace for Exceptions

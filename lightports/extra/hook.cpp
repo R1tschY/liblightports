@@ -13,7 +13,7 @@ namespace Windows {
 bool Hook::create(int hook_id, DWORD thread_id, HOOKPROC func) {
   if (!hook_) {
     hook_ = SetWindowsHookEx(hook_id, func, Module::getInstance(), thread_id);
-    if (hook_ == nullptr)  MessageBeep(MB_ICONERROR);
+    // TODO: log if (hook_ != nullptr)
     return (hook_ != nullptr);
   } else {
     return true;
@@ -46,7 +46,7 @@ void MouseHook::removeHandler(MouseHook::WheelHandler* proc) {
   cpp::erase(wheel_hooks_, proc);
   if (empty()) {
     if (!hook_.destroy()) {
-      MessageBeep(MB_ICONERROR);
+      // TODO: log MessageBeep(MB_ICONERROR);
     }
   }
 }
@@ -60,7 +60,7 @@ void MouseHook::removeHandler(MouseHook::ClickHandler* proc) {
   cpp::erase(click_hooks_, proc);
   if (empty()) {
     if (!hook_.destroy()) {
-      MessageBeep(MB_ICONERROR);
+      // TODO: log MessageBeep(MB_ICONERROR);
     }
   }
 }
