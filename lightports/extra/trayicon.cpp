@@ -93,6 +93,7 @@ void TrayIcon::showBalloon(cpp::wstring_view title, cpp::wstring_view msg, Syste
 
 void TrayIcon::setIcon(int resource_id)
 {
+  // TODO: use LoadIconMetric if Mingw supports it
   setIcon(
     Resources::getIcon(
       Application::getInstance(),

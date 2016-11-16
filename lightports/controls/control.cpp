@@ -154,16 +154,18 @@ void Control::setPosition(const Rectangle& rect)
 std::wstring Control::getClassName(HWND hwnd)
 {
   wchar_t buffer[1024]; // TODO
+  ::SetLastError(0);
   int chars = ::GetClassNameW(hwnd, buffer, cpp::length(buffer));
-  win_print_on_fail(chars > 0);
+  win_print_on_fail(chars > 0 || ::GetLastError() == 0);
   return std::wstring(buffer, chars);
 }
 
 std::wstring Control::getWindowText(HWND hwnd)
 {
   wchar_t buffer[1024]; // TODO
-  int chars = ::GetWindowTextW(hwnd, buffer, cpp::length(buffer));
-  win_print_on_fail(chars > 0);
+  ::SetLastError(0);
+  int chars = ::GetWindowTextW(hwnd, buffer, cpp::length(buffer)); // TODO: SendMessage(MSG_GETTEXT, ...
+  win_print_on_fail(chars > 0 || ::GetLastError() == 0);
   return std::wstring(buffer, chars);
 }
 
