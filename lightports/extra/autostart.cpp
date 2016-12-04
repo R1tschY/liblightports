@@ -1,7 +1,7 @@
 #include "autostart.h"
 
 #include "../core/debug.h"
-#include "../base/application.h"
+#include "../user/application.h"
 #include <windows.h>
 
 namespace Windows {
@@ -14,7 +14,7 @@ bool setProgramToAutostart(bool value) {
     0, NULL, REG_OPTION_NON_VOLATILE,
     KEY_ALL_ACCESS, NULL, &key, 0);
   if (error != ERROR_SUCCESS) {
-    WIN_WARNING(L"cannot open autostart registry key: %s", GetLastWindowsError().c_str());
+    WIN_WARNING(L"cannot open autostart registry key: %s", getLastWindowsError().c_str());
     return false;
   }
 
@@ -28,7 +28,7 @@ bool setProgramToAutostart(bool value) {
 
   RegCloseKey(key);
   if (error != ERROR_SUCCESS) {
-    WIN_WARNING(L"cannot set autostart registry value: %s", GetLastWindowsError().c_str());
+    WIN_WARNING(L"cannot set autostart registry value: %s", getLastWindowsError().c_str());
     return false;
   }
   return true;
@@ -44,7 +44,7 @@ bool isProgramInAutostart() {
     0, NULL, REG_OPTION_NON_VOLATILE,
     KEY_ALL_ACCESS, NULL, &key, 0);
   if (error != ERROR_SUCCESS) {
-    WIN_WARNING(L"cannot open autostart registry key: %s", GetLastWindowsError().c_str());
+    WIN_WARNING(L"cannot open autostart registry key: %s", getLastWindowsError().c_str());
     return false;
   }
 
@@ -73,7 +73,7 @@ bool isProgramInAutostart() {
   bool result;
   if (error != ERROR_SUCCESS) {
     if (error != ERROR_FILE_NOT_FOUND) {
-      WIN_WARNING(L"cannot read autostart registry value: %s", GetLastWindowsError().c_str());
+      WIN_WARNING(L"cannot read autostart registry value: %s", getLastWindowsError().c_str());
     }
     result = false;
   } else {

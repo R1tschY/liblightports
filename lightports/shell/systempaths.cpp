@@ -20,25 +20,22 @@
 /// IN THE SOFTWARE.
 ///
 
-#ifndef LIGHTPORTS_EXTRA_MODULE_H_
-#define LIGHTPORTS_EXTRA_MODULE_H_
-
-#include <windows.h>
+#include <lightports/shell/systempaths.h>
+#include <lightports/core/debug.h>
+#include <cpp-utils/scope.h>
 
 namespace Windows {
 
-/// \brief
-class Module
+std::wstring getKnownFolderPath(REFKNOWNFOLDERID fid, DWORD flags)
 {
-  Module() = delete;
-public:
+  wchar_t* result;
 
-  friend class Dll;
-  static void setDllInstance(HINSTANCE hinst);
+  scope(exit) { if (result) CoTaskMemFree(result); };
+  win_throw_on_fail(
+    ::SHGetKnownFolderPath(fid, flags, nullptr, &result)
+  );
 
-  static HINSTANCE getInstance();
-};
+  return std::wstring(result);
+}
 
 } // namespace Windows
-
-#endif /* LIGHTPORTS_EXTRA_MODULE_H_ */

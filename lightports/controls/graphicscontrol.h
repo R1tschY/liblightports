@@ -29,7 +29,7 @@ public:
   { }
   
   HDC getGraphicsContext() const {
-    return GetDC(getNativeHandle());
+    return GetDC(getHWND());
   }
 
   LRESULT onMessage(UINT msg, WPARAM wparam, LPARAM lparam) override;

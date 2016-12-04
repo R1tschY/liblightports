@@ -7,7 +7,7 @@
 #include "../core/macros.h"
 #include "../core/exception.h"
 #include "../core/debugstream.h"
-#include "../base/charcodecs.h"
+#include "../extra/charcodecs.h"
 
 namespace Windows {
 
@@ -104,7 +104,7 @@ int Application::processMessages()
   return (int) msg.wParam;
 }
 
-HINSTANCE Application::getInstance()
+HINSTANCE Application::getHINSTANCE()
 {
   if (instance_)
     return self().appinstance_;

@@ -6,22 +6,22 @@
 
 namespace Windows {
 
-class Window : public Control {
+class TopLevelWindow : public Control {
 public:
   enum class Type : DWORD {
     Normal = WS_OVERLAPPEDWINDOW,
     Popup = WS_POPUP,
   };
 
-  Window(Type type, DWORD exstyle = 0) :
+  TopLevelWindow(Type type, DWORD exstyle = 0) :
     Control((DWORD)type, exstyle | WS_EX_LAYERED)
   { }
 
-  Window(cpp::wstring_view window_class, Type type, DWORD exstyle = 0) :
+  TopLevelWindow(cpp::wstring_view window_class, Type type, DWORD exstyle = 0) :
     Control(window_class.data(), (DWORD)type, exstyle | WS_EX_LAYERED)
   { }
 
-  Window(ATOM window_class, Type type, DWORD exstyle = 0) :
+  TopLevelWindow(ATOM window_class, Type type, DWORD exstyle = 0) :
     Control(window_class, (DWORD)type, exstyle | WS_EX_LAYERED)
   { }
 

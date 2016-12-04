@@ -3,6 +3,6 @@ file(GLOB lightports_extra_SOURCES "*.cpp")
 
 lightport_module(
   NAME lightports-extra
-  DEPS lightports-base comctl32
+  DEPS lightports-core comctl32 cpp-utils
   SOURCES ${lightports_extra_SOURCES}
 )

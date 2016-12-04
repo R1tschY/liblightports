@@ -29,6 +29,9 @@ using LocalArray = cpp::unique_array<T, Detail::LocalDeleter>;
 //
 // GeneralHandle
 
+template<typename Deleter>
+using ManagedHandle = std::unique_ptr<typename Deleter::pointer, Deleter>;
+
 #define WINDOWS_DEFINE_HANDLE_DELETER(func) \
   template<typename PointerT> \
   struct func##Functor { \
@@ -66,7 +69,7 @@ struct HandleDeleter {
   { ::CloseHandle(ptr); }
 };
 
-using Handle = std::unique_ptr<HANDLE, HandleDeleter>;
+using Handle = ManagedHandle<HandleDeleter>;
 
 struct HandleExDeleter {
   typedef HANDLE pointer;
@@ -75,7 +78,7 @@ struct HandleExDeleter {
   { if (ptr != INVALID_HANDLE_VALUE) ::CloseHandle(ptr); }
 };
 
-using HandleEx = std::unique_ptr<HANDLE, HandleExDeleter>;
+using HandleEx = ManagedHandle<HandleExDeleter>;
 
 struct FindHandleDeleter {
   typedef HANDLE pointer;
@@ -84,7 +87,7 @@ struct FindHandleDeleter {
   { if (ptr != INVALID_HANDLE_VALUE) ::FindClose(ptr); }
 };
 
-using FindHandle = std::unique_ptr<HANDLE, FindHandleDeleter>;
+using FindHandle = ManagedHandle<FindHandleDeleter>;
 
 } // namespace Windows
 

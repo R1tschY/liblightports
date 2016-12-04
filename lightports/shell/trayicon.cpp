@@ -3,9 +3,9 @@
 #include <algorithm>
 #include <windowsx.h>
 #include <cpp-utils/algorithm/length.h>
-#include "../base/application.h"
-#include <lightports/extra/systeminformation.h>
-#include <lightports/base/resources.h>
+#include "../user/application.h"
+#include <lightports/user/systeminformation.h>
+#include <lightports/user/resources.h>
 
 namespace Windows {
 
@@ -96,7 +96,7 @@ void TrayIcon::setIcon(int resource_id)
   // TODO: use LoadIconMetric if Mingw supports it
   setIcon(
     Resources::getIcon(
-      Application::getInstance(),
+      Application::getHINSTANCE(),
       resource_id,
       SystemMetrics::getDefaultSmallIconSize()));
 }

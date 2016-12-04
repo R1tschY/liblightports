@@ -1,7 +1,7 @@
 lightport_module(
   NAME lightports-controls
-  DEPS lightports-base ole32 shell32 gdiplus
-  SOURCES control.cpp window.cpp utilwindow.cpp messagesink.cpp
+  DEPS lightports-core ole32 shell32 gdiplus
+  SOURCES control.cpp toplevelwindow.cpp utilwindow.cpp messagesink.cpp
 )
 
 lightport_module(

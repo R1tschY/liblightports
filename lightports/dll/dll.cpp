@@ -1,5 +1,4 @@
 #include "dll.h"
-#include "../base/module.h"
 
 namespace Windows {
 
@@ -23,9 +22,7 @@ DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID) {
 
   if (fdwReason == DLL_PROCESS_ATTACH) {
     // for more performance
-    DisableThreadLibraryCalls(hinstDLL);
-
-    Module::setDllInstance(hinstDLL);
+    ::DisableThreadLibraryCalls(hinstDLL);
   }
 
   return true;

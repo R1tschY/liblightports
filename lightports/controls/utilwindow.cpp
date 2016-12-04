@@ -2,7 +2,7 @@
 
 #include <memory>
 
-#include "../base/charcodecs.h"
+#include "../extra/charcodecs.h"
 #include "messagesink.h"
 #include "../core/debug.h"
 
@@ -43,8 +43,8 @@ UtilWindow createCallbackWindow()
 
 HWND getCallbackWindow() {
   static UtilWindow window = createCallbackWindow();
-  cpp_assert(window.getNativeHandle());
-  return window.getNativeHandle();
+  cpp_assert(window.getHWND());
+  return window.getHWND();
 }
 
 } // namespace Windows

@@ -33,8 +33,8 @@ LRESULT GraphicsControl::onMessage(UINT msg, WPARAM wparam, LPARAM lparam)
   }
 
   case WM_ACTIVATE:
-    InvalidateRect(getNativeHandle(), nullptr, true);
-    return DefWindowProc(getNativeHandle(), msg, wparam, lparam);
+    InvalidateRect(getHWND(), nullptr, true);
+    return DefWindowProc(getHWND(), msg, wparam, lparam);
 
   case WM_ERASEBKGND:
     // Don't do any erasing here.  It's done in WM_PAINT to avoid flicker.
@@ -64,7 +64,7 @@ void GraphicsControl::onPaint(Gdiplus::Graphics&) { }
 void GraphicsControl::doPaint()
 {
   PAINTSTRUCT ps;
-  HDC hdc = BeginPaint(getNativeHandle(), &ps);
+  HDC hdc = BeginPaint(getHWND(), &ps);
 
 #if WINVER >= 0x06000
   PaintBuffer paint_buffer;
@@ -83,7 +83,7 @@ void GraphicsControl::doPaint()
   Gdiplus::Graphics graphics(hdc);
   onPaint(graphics);
 
-  EndPaint(getNativeHandle(), &ps);
+  EndPaint(getHWND(), &ps);
 }
 
 void GraphicsControl::doPrintClient(HDC hdc)

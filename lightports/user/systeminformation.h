@@ -3,7 +3,7 @@
 
 #include <windows.h>
 
-#include "../core/geometry.h"
+#include "../user/geometry.h"
 
 namespace Windows {
 

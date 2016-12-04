@@ -25,24 +25,24 @@ std::wstring Resources::getString(HINSTANCE hinstance, unsigned id)
   return std::wstring(p, static_cast<size_t>(len));
 }
 
-HICON Resources::getIcon(HINSTANCE hinstance, int id)
+IconView Resources::getIcon(HINSTANCE hinstance, int id)
 {
-  return win_throw_on_fail(LoadIcon(hinstance, MAKEINTRESOURCE(id)));
+  return IconView(win_throw_on_fail(LoadIcon(hinstance, MAKEINTRESOURCE(id))));
 }
 
-HICON Resources::getIcon(HINSTANCE hinstance, int id, Size size)
+IconView Resources::getIcon(HINSTANCE hinstance, int id, Size size)
 {
-  return (HICON)win_throw_on_fail(
+  return IconView((HICON)win_throw_on_fail(
       LoadImage(
           hinstance,
           MAKEINTRESOURCE(id),
           IMAGE_ICON,
           size.getWidth(), size.getHeight(),
           LR_SHARED)
-      );
+      ));
 }
 
-//Icon Resources::getIconMetric(HINSTANCE hinstance, int id, int lim)
+//IconHandle Resources::getIconMetric(HINSTANCE hinstance, int id, int lim)
 //{
 //  HICON result;
 //  win_throw_on_fail(
@@ -52,7 +52,7 @@ HICON Resources::getIcon(HINSTANCE hinstance, int id, Size size)
 //        lim,
 //        &result)
 //    );
-//  return result;
+//  return IconHandle(result);
 //}
 
 } /* namespace Windows */

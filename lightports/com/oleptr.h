@@ -8,7 +8,7 @@ namespace Windows {
 struct OLEDeleter {
   template<typename T>
   void operator()(T* ptr) {
-    CoTaskMemFree(ptr);
+    ::CoTaskMemFree(ptr);
   }
 };
 

@@ -7,7 +7,7 @@
 #include <lightports/core/debug.h>
 #include <lightports/core/debugstream.h>
 #include <lightports/core/exception.h>
-#include <lightports/core/geometry.h>
+#include <lightports/user/geometry.h>
 #include <lightports/core/macros.h>
 #include <windows.h>
 #include <iostream>
@@ -16,6 +16,24 @@
 #include <string>
 
 namespace Windows {
+
+class Control;
+class Window;
+
+enum class AnimateMode {
+  Blend = AW_BLEND,
+  SlideRightToLeft = AW_HOR_NEGATIVE | AW_SLIDE,
+  SlideLeftToRight = AW_HOR_POSITIVE | AW_SLIDE,
+  SlideTopToBottom = AW_VER_POSITIVE | AW_SLIDE,
+  SlideBottomToTop = AW_VER_NEGATIVE | AW_SLIDE,
+  RollRightToLeft = AW_HOR_NEGATIVE,
+  RollLeftToRight = AW_HOR_POSITIVE,
+  RollTopToBottom = AW_VER_NEGATIVE,
+  RollBottmToTop = AW_VER_POSITIVE,
+  ExpandCollapse = AW_CENTER
+};
+
+namespace Internal {
 
 struct FindWindowIteratorSentinel { };
 
@@ -51,26 +69,168 @@ private:
   HWND hwnd_ = nullptr;
 };
 
+using FindWindowRange = cpp::iterator_range<FindWindowIterator, FindWindowIteratorSentinel>;
 
-class Control {
-  DISALLOW_COPY_AND_ASSIGN(Control);
+class ControlCommonBase
+{
 public:
+  static void setPosition(HWND hwnd, const Rectangle& rect);
+  static std::wstring getClassName(HWND hwnd);
+  static std::wstring getWindowText(HWND hwnd);
+};
+
+template<typename Derived>
+class ControlBase : protected ControlCommonBase
+{
+public:
+  // properties
+
+  Rectangle getClientRect() const
+  {
+    RECT rc;
+    win_throw_on_fail(GetClientRect(getHWND(), &rc));
+    return rc;
+  }
+
+  bool okay() const {
+    return bool(getHWND());
+  }
+  explicit operator bool() const {
+    return okay();
+  }
+
+  // base functions
+
+  void show(int show_command = SW_SHOW)
+  {
+    win_throw_on_fail(::ShowWindow(getHWND(), show_command));
+  }
+
+  void showAnimated(AnimateMode mode, unsigned time)
+  {
+    win_throw_on_fail(::AnimateWindow(getHWND(), time, (int)mode));
+  }
+
+  void hide()
+  {
+    show(SW_HIDE);
+  }
+
+  void hideAnimated(AnimateMode mode, unsigned time)
+  {
+    win_throw_on_fail(::AnimateWindow(getHWND(), time, (int)mode | AW_HIDE));
+  }
+
+  // properties
+
+  void setParent(HWND value)
+  {
+    win_throw_on_fail(::SetParent(getHWND(), value));
+  }
+
+  void setParent(const Control& value);
+
+  HWND getParent() const
+  {
+    return win_throw_on_fail(::GetParent(getHWND()));
+  }
+
+  void setTopmost()
+  {
+    win_throw_on_fail(
+      ::SetWindowPos(getHWND(), HWND_TOPMOST, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE)
+    );
+  }
+
+  void setPosition(const Rectangle& rect)
+  { ControlCommonBase::setPosition(getHWND(), rect); }
+
+  std::wstring getClassName() const
+  { return ControlCommonBase::getClassName(getHWND()); }
+
+  std::wstring getWindowText() const
+  { return ControlCommonBase::getWindowText(getHWND()); }
+
+  HWND findChild(cpp::wstring_view class_name, cpp::wstring_view window_name) const
+  {
+    return win_throw_on_fail(
+      ::FindWindowExW(getHWND(), nullptr, class_name.data(), window_name.data())
+    );
+  }
+
+  FindWindowRange findChilds(cpp::wstring_view class_name, cpp::wstring_view window_name) const
+  {
+    return cpp::make_range(
+        FindWindowIterator(getHWND(), class_name, window_name),
+        FindWindowIteratorSentinel()
+      );
+  }
+
+  DWORD getProcessId() const
+  {
+    DWORD pid;
+    ::GetWindowThreadProcessId(getHWND(), &pid);
+    return pid;
+  }
+
+  DWORD getThreadId() const
+  {
+    return ::GetWindowThreadProcessId(getHWND(), nullptr);
+  }
+
+  bool operator==(HWND rhs) const
+  {
+    return getHWND() == rhs;
+  }
+  bool operator!=(HWND rhs) const
+  {
+    return getHWND() != rhs;
+  }
+
+private:
+  HWND getHWND() const { return static_cast<const Derived*>(this)->getHWND(); }
+};
+
+} // namespace Internal
+
+class Window : public Internal::ControlBase<Window>
+{
+public:
+  constexpr Window() : hwnd_(nullptr) { }
+  constexpr Window(HWND hwnd) : hwnd_(hwnd) { }
+  Window(const Control& control);
+
+  constexpr HWND getHWND() const { return hwnd_; }
 
   // enums
 
-  enum class AnimateMode {
-    Blend = AW_BLEND,
-    SlideRightToLeft = AW_HOR_NEGATIVE | AW_SLIDE,
-    SlideLeftToRight = AW_HOR_POSITIVE | AW_SLIDE,
-    SlideTopToBottom = AW_VER_POSITIVE | AW_SLIDE,
-    SlideBottomToTop = AW_VER_NEGATIVE | AW_SLIDE,
-    RollRightToLeft = AW_HOR_NEGATIVE,
-    RollLeftToRight = AW_HOR_POSITIVE,
-    RollTopToBottom = AW_VER_NEGATIVE,
-    RollBottmToTop = AW_VER_POSITIVE,
-    ExpandCollapse = AW_CENTER
-  };
+  static Window find(cpp::wstring_view class_name, cpp::wstring_view window_name)
+  {
+    return FindWindowExW(nullptr, nullptr, class_name.data(), window_name.data());
+  }
 
+  static
+  Internal::FindWindowRange
+  findAll(cpp::wstring_view class_name, cpp::wstring_view window_name)
+  {
+    return cpp::make_range(
+      Internal::FindWindowIterator(nullptr, class_name, window_name),
+      Internal::FindWindowIteratorSentinel()
+    );
+  }
+
+  static Window at(Point pt)
+  {
+    return ::WindowFromPoint(pt.getNative());
+  }
+
+private:
+  HWND hwnd_;
+};
+
+class Control : public Internal::ControlBase<Control>
+{
+public:
   // ctors/dtor
   explicit Control() :
           class_(MAKEINTATOM(getWindowClass()))
@@ -103,31 +263,6 @@ public:
 
   virtual ~Control();
 
-  // properties
-
-  HWND getNativeHandle() const {
-    return handle_.get();
-  }
-
-  HWND getHWND() const {
-    return handle_.get();
-  }
-
-  Rectangle getClientRect() const {
-    RECT rc;
-    cpp_assert(handle_);
-    win_print_on_fail(GetClientRect(handle_.get(), &rc));
-    return rc;
-  }
-
-  bool okay() const {
-    return bool(handle_);
-  }
-  explicit operator bool() const {
-    return okay();
-  }
-
-  // base functions
   void create(HWND parent, cpp::wstring_view title, const Rectangle& rect) {
     create(parent, title, rect.getX(), rect.getY(), rect.getWidth(), rect.getHeight());
   }
@@ -135,21 +270,11 @@ public:
 
   void destroy();
 
-  void show(int show_command = SW_SHOW);
-  void showAnimated(AnimateMode mode, unsigned time) { AnimateWindow(getNativeHandle(), time, (int)mode); }
-
-  void hide() { show(SW_HIDE); }
-  void hideAnimated(AnimateMode mode, unsigned time) { AnimateWindow(getNativeHandle(), time, (int)mode | AW_HIDE); }
-
-  // properties
-
-  void setParent(HWND value) { win_print_on_fail(SetParent(getNativeHandle(), value)); }
-  void setParent(Control value) { win_print_on_fail(SetParent(getNativeHandle(), value.getNativeHandle())); }
-  HWND getParent() const { return GetParent(getNativeHandle()); }
+  HWND getHWND() const {
+    return handle_.get();
+  }
 
   void setTopmost();
-
-  void setPosition(const Rectangle& rect);
 
   static ATOM registerClass(
       cpp::wstring_view class_name,
@@ -160,26 +285,7 @@ public:
       cpp::wstring_view menu,
       HICON small_icon);
 
-  static HWND find(HWND parent, cpp::wstring_view class_name, cpp::wstring_view window_name)
-  {
-    return FindWindowExW(parent, nullptr, class_name.data(), window_name.data());
-  }
-
-  static
-  cpp::iterator_range<FindWindowIterator, FindWindowIteratorSentinel>
-  findAll(HWND parent, cpp::wstring_view class_name, cpp::wstring_view window_name)
-  {
-    return cpp::iterator_range<FindWindowIterator, FindWindowIteratorSentinel>(
-        FindWindowIterator(parent, class_name, window_name),
-        FindWindowIteratorSentinel()
-      );
-  }
-
-  static std::wstring getClassName(HWND hwnd);
-  static std::wstring getWindowText(HWND hwnd);
-
 private:
-
   struct ControlDeleter {
     typedef HWND pointer;
     void operator()(HWND ptr) {
@@ -211,6 +317,19 @@ protected:
   virtual void onDestroy();
   virtual LRESULT onMessage(UINT msg, WPARAM wparam, LPARAM lparam);
 };
+
+// impl's
+
+inline
+Window::Window(const Control& control)
+: hwnd_(control.getHWND())
+{ }
+
+template<typename Derived> inline
+void Internal::ControlBase<Derived>::setParent(const Control& value)
+{
+  win_throw_on_fail(::SetParent(getHWND(), value.getHWND()));
+}
 
 } // namespace Windows
 

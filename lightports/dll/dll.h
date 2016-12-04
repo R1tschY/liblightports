@@ -17,7 +17,7 @@ public:
 
   static Dll& get();
 
-  static HINSTANCE getInstance() { return get().instance_; }
+  static HINSTANCE getHINSTANCE() { return get().instance_; }
 
 private:
   HINSTANCE instance_;

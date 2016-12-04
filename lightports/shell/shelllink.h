@@ -4,7 +4,7 @@
 #include <windows.h>
 #include "../com/comcontext.h"
 #include "../com/comptr.h"
-#include "../extra/shortcut.h"
+#include "../user/shortcut.h"
 
 class IShellLinkW;
 class IPersistFile;

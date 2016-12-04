@@ -8,6 +8,8 @@
 
 namespace Windows {
 
+constexpr Window MessageOnlyHWnd = Window(HWND_MESSAGE);
+
 class MessageSink : protected Control
 {
 public:
@@ -23,21 +25,20 @@ public:
 
   void create(cpp::wstring_view name = L"MessageSink");
 
-  HWND getNativeHandle() { return Control::getNativeHandle(); }
+  HWND getHWND() { return Control::getHWND(); }
 
-  using Control::getNativeHandle;
   using Control::destroy;
 
-  static HWND find(cpp::wstring_view class_name, cpp::wstring_view window_name)
+  static Window find(cpp::wstring_view class_name, cpp::wstring_view window_name)
   {
-    return Control::find(HWND_MESSAGE, class_name, window_name);
+    return MessageOnlyHWnd.findChild(class_name, window_name);
   }
 
   static
-  cpp::iterator_range<FindWindowIterator, FindWindowIteratorSentinel>
+  Internal::FindWindowRange
   findAll(cpp::wstring_view class_name, cpp::wstring_view window_name)
   {
-    return Control::findAll(HWND_MESSAGE, class_name, window_name);
+    return MessageOnlyHWnd.findChilds(class_name, window_name);
   }
 };
 

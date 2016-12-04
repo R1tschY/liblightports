@@ -18,6 +18,7 @@
 #include <experimental/string_view>
 #include <locale>
 #include <sstream>
+#include <comdef.h>
 
 namespace Windows {
 
@@ -56,70 +57,10 @@ LocalArray<wchar_t> getErrorString(DWORD code, DWORD language)
   return LocalArray<wchar_t>();
 }
 
-//static
-//void getErrorString(DWORD code, DWORD language, std::wstring& result)
-//{
-//  if (result.capacity() < 64)
-//    result.append(64 - result.size(), L'\0');
-//  else
-//    result.append(result.capacity() - result.size(), L'\0');
-//
-//  DWORD chars = ::FormatMessageW(
-//      FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS,
-//      nullptr,
-//      code,
-//      language,
-//      &(*result.begin()),
-//      result.size(),
-//      nullptr);
-//
-//  if (chars > 0) {
-//    // FormatMessageW succeeded
-//    result.erase(chars + 1);
-//  }
-//  else
-//  {
-//    result = std::to_wstring(code);
-//
-//    DWORD error = ::GetLastError();
-//    if (error != 0)
-//      print(L"Lightports: Failed to format error message %d with error code %d", code, error);
-//  }
-//}
-
-//static
-//std::wstring getErrorString(DWORD code, DWORD language)
-//{
-//  wchar_t buffer[256];
-//
-//  DWORD chars = ::FormatMessageW(
-//      FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS,
-//      nullptr,
-//      code,
-//      language,
-//      &buffer,
-//      cpp::length(buffer),
-//      nullptr);
-//
-//  if (chars > 0)
-//    // FormatMessageW succeeded
-//    return std::wstring(buffer, chars);
-//
-//  DWORD error = ::GetLastError();
-//  if (error == 0)
-//    // empty message!
-//    return std::to_wstring(code);
-//
-//  print(L"Lightports: Failed to format error message %d with error code %d", code, error);
-//
-//  return std::to_wstring(code);
-//}
-
 std::wstring getWindowsError(DWORD code)
 {
   auto error_string = getErrorString(code, Language::Neutral);
   if (!error_string) {
-    wchar_t buffer[64];
     cpp::small_owstringstream<64> stream;
     stream << L"Windows error code: " << code << L'\0';
     return stream.str();
@@ -154,10 +95,10 @@ void printMessage(LogLevel level, const wchar_t* format, ...) {
   }
 
   static const wchar_t* prefix[LL_MAX] = {
-    L"--- MESSAGE: ", // LL_MESSAGE
-    L"??? WARNING: ", // LL_WARNING
-    L"!!! CRITIAL: ", // LL_CRITICAL
-    L"!!! ERROR: ", // LL_ERROR
+    L"[INFO] ", // LL_MESSAGE
+    L"[WARN] ", // LL_WARNING
+    L"[CRITICAL] ", // LL_CRITICAL
+    L"[ERROR] ", // LL_ERROR
   };
 
   OutputDebugStringW(prefix[level]);
@@ -174,18 +115,9 @@ void printMessage(LogLevel level, const wchar_t* format, ...) {
   }
 }
 
-void printError(cpp::wstring_view error_message, DWORD error_code) {
-  auto error_string = getErrorString(error_code, Language::Neutral);
-  if (error_string) {
-    WIN_CRITICAL(L"Error while call of %ls: %ls", error_message.data(), error_string.data());
-  }
-  else
-  {
-    WIN_CRITICAL(L"Error while call of %ls: error code %d.", error_message.data(), error_code);
-  }
-}
-
-void printWindowsFail(const char* func, const char* error_message, DWORD error_code) {
+void PrintWindowsFail::call(
+  const char* func, const char* error_message, HRESULT error_code)
+{
   auto error_string = getErrorString(error_code, Language::Neutral);
   if (error_string) {
     WIN_CRITICAL(L"Error while call of %s %s: %ls", func, error_message, error_string.data());
@@ -196,7 +128,9 @@ void printWindowsFail(const char* func, const char* error_message, DWORD error_c
   }
 }
 
-void throwWindowsFail(const char* func, const char* error_message, DWORD error_code) {
+void ThrowWindowsFail::call(
+  const char* func, const char* error_message, HRESULT error_code)
+{
   auto error_string = getErrorString(error_code, Language::Neutral);
   if (error_string) {
     WIN_CRITICAL(L"Error while call of %s %s: %ls", func, error_message, error_string.data());

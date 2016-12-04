@@ -7,8 +7,8 @@
 #include <functional>
 
 #include "../core/macros.h"
-#include "../core/geometry.h"
-#include "icon.h"
+#include "../user/geometry.h"
+#include "../user/icon.h"
 
 namespace Windows {
 
@@ -36,7 +36,7 @@ public:
   void add(HWND hwnd);
   void remove();
 
-  void setIcon(const Icon& icon) { setIcon(icon.getHICON()); }
+  void setIcon(IconView icon) { setIcon(icon.getHICON()); }
   void setIcon(int resource_id);
   void setIcon(HICON icon);
   void setToolTip(cpp::wstring_view src);

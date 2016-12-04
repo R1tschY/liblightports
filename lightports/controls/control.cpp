@@ -1,6 +1,6 @@
 #include "control.h"
 
-#include <lightports/base/application.h>
+#include <lightports/user/application.h>
 #include <cpp-utils/likely.h>
 #include <algorithm>
 
@@ -26,7 +26,7 @@ ATOM Control::registerClass(
   wcex.lpfnWndProc	 = &Control::MessageEntry;
   wcex.cbClsExtra	   = 0;
   wcex.cbWndExtra	   = 0;
-  wcex.hInstance	   = Application::getInstance();
+  wcex.hInstance	   = Application::getHINSTANCE();
   wcex.hIcon		     = icon;
   wcex.hIconSm		   = small_icon;
   wcex.hCursor		   = cursor;
@@ -117,7 +117,7 @@ void Control::create(
         nullptr,
 
         // Instance handle
-        Application::getInstance(),
+        Application::getHINSTANCE(),
 
         // Additional application data
         this));
@@ -128,30 +128,26 @@ void Control::destroy()
   handle_.reset();
 }
 
-void Control::show(int show_command)
-{
-  ShowWindow(getNativeHandle(), show_command);
-}
-
 void Control::setTopmost() {
   exstyle_ |= WS_EX_TOPMOST;
   if (handle_) {
-    win_print_on_fail(SetWindowPos(getNativeHandle(), HWND_TOPMOST, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE));
+    win_print_on_fail(SetWindowPos(getHWND(), HWND_TOPMOST, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE));
   }
 }
 
-void Control::setPosition(const Rectangle& rect)
+namespace Internal {
+
+void ControlCommonBase::setPosition(HWND hwnd, const Rectangle& rect)
 {
-  cpp_assert(handle_);
-  win_print_on_fail(SetWindowPos(
-                      getNativeHandle(),
-                      nullptr,
-                      rect.getX(), rect.getY(),
-                      rect.getWidth(), rect.getHeight(),
-                      SWP_NOACTIVATE | SWP_NOZORDER));
+  win_throw_on_fail(::SetWindowPos(
+    hwnd,
+    nullptr,
+    rect.getX(), rect.getY(),
+    rect.getWidth(), rect.getHeight(),
+    SWP_NOACTIVATE | SWP_NOZORDER));
 }
 
-std::wstring Control::getClassName(HWND hwnd)
+std::wstring ControlCommonBase::getClassName(HWND hwnd)
 {
   wchar_t buffer[1024]; // TODO
   ::SetLastError(0);
@@ -160,7 +156,7 @@ std::wstring Control::getClassName(HWND hwnd)
   return std::wstring(buffer, chars);
 }
 
-std::wstring Control::getWindowText(HWND hwnd)
+std::wstring ControlCommonBase::getWindowText(HWND hwnd)
 {
   wchar_t buffer[1024]; // TODO
   ::SetLastError(0);
@@ -168,6 +164,8 @@ std::wstring Control::getWindowText(HWND hwnd)
   win_print_on_fail(chars > 0 || ::GetLastError() == 0);
   return std::wstring(buffer, chars);
 }
+
+} // namespace Internal
 
 //
 // message handling

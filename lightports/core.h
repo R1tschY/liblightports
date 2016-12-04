@@ -2,6 +2,7 @@
 #define LIBS_WINDOWS_CORE_H_
 
 #include "core/debug.h"
+#include "core/debugstream.h"
 #include "core/bits.h"
 #include "core/exception.h"
 #include "core/macros.h"

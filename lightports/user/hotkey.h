@@ -3,7 +3,7 @@
 #include <windows.h>
 
 #include "../core/macros.h"
-#include "../extra/shortcut.h"
+#include "../user/shortcut.h"
 
 namespace Windows {
 

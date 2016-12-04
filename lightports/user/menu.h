@@ -7,7 +7,7 @@
 #include <cpp-utils/algorithm/zero.h>
 #include <cpp-utils/strings/string_view.h>
 
-#include "../core/geometry.h"
+#include "../user/geometry.h"
 
 namespace Windows {
 

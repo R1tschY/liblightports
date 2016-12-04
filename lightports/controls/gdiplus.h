@@ -26,7 +26,7 @@
 #include <windows.h>
 #include <gdiplus.h>
 
-#include "../core/geometry.h"
+#include "../user/geometry.h"
 
 namespace Windows {
 

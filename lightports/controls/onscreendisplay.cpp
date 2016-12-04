@@ -30,7 +30,7 @@ void OnScreenDisplay::onPaint(Graphics& context)
 
 void OnScreenDisplay::onCreate()
 {
-  SetLayeredWindowAttributes(getNativeHandle(), RGB(0,0,0), 255*0.5, LWA_ALPHA);
+  SetLayeredWindowAttributes(getHWND(), RGB(0,0,0), 255*0.5, LWA_ALPHA);
 }
 
 } // namespace Windows

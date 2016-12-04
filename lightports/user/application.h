@@ -7,7 +7,7 @@
 #include <atomic>
 #include "../core/macros.h"
 #include "../core/memory.h"
-#include "../base/path.h"
+#include "../os/path.h"
 #include <cpp-utils/strings/string_view.h>
 #include "../core/version.h"
 #include <cpp-utils/assert.h>
@@ -28,7 +28,7 @@ public:
   int run(ExecuteFunc unique_entry, ExecuteFunc duplicate_entry = ExecuteFunc());
 
   // application properties
-  static HINSTANCE getInstance();
+  static HINSTANCE getHINSTANCE();
   static cpp::wstring_view getName() { return self().name_; }
 
   // paths

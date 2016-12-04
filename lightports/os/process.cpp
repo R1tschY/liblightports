@@ -32,7 +32,8 @@ Process Process::runCmdln(cpp::wstring_view cmdln, cpp::wstring_view working_dir
     &pi);
   win_throw_on_fail(success);
 
-  return Process(pi);
+  ::CloseHandle(pi.hThread);
+  return Process(pi.hProcess);
 }
 
 Process Process::run(
@@ -49,6 +50,18 @@ Process Process::run(
   cmdln.append(args.begin(), args.end());
 
   return runCmdln(cmdln, working_directory);
+}
+
+Process Process::open(DWORD desiredAccess, DWORD pid)
+{
+  return Process(win_throw_on_fail(::OpenProcess(desiredAccess, false, pid)));
+}
+
+void Process::terminate(DWORD exitCode)
+{
+  win_throw_on_fail(
+    ::TerminateProcess(getHANDLE(), exitCode)
+  );
 }
 
 } // namespace Windows
