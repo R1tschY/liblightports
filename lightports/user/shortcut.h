@@ -10,6 +10,8 @@ namespace Windows {
 struct ShortCut
 {
   unsigned modifiers = 0;
+
+  ///  virtual-key code
   unsigned key = 0;
 
   bool isValid() const noexcept { return key != 0; }

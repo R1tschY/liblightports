@@ -14,6 +14,10 @@
 #include <cpp-utils/memory/unmanaged.h>
 #include <lightports/core.h>
 
+#ifndef OCR_HELP
+# define OCR_HELP 32651
+#endif
+
 namespace Windows {
 
 struct HCURSORDeleter
@@ -37,7 +41,8 @@ public:
 
   CursorBase<std::unique_ptr<HCURSOR, HCURSORDeleter>> copy() const
   {
-    return CopyCursor(getHCURSOR());
+    return CursorBase<std::unique_ptr<HCURSOR, HCURSORDeleter>>(
+         CopyCursor(getHCURSOR()));
   }
 
   HCURSOR getHCURSOR() const { return Storage::get(); }
@@ -85,7 +90,12 @@ enum class StockCursor
   SizeNwSe = OCR_SIZENWSE,
   SizeWE = OCR_SIZEWE,
   Up = OCR_UP,
-  Wait = OCR_WAIT
+  Wait = OCR_WAIT,
+
+  // inofficial
+  Help = OCR_HELP,
+  Pen = 32631,
+  WaitCd = 32663
 };
 
 inline
