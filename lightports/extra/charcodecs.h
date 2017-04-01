@@ -7,8 +7,8 @@
 
 namespace Windows {
 
-std::string to_string(cpp::wstring_view src);
 std::wstring to_wstring(cpp::string_view src);
+std::string to_string(cpp::wstring_view src);
 
 } // namespace Windows
 

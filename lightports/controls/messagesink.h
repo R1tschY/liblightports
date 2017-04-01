@@ -8,7 +8,7 @@
 
 namespace Windows {
 
-constexpr Window MessageOnlyHWnd = Window(HWND_MESSAGE);
+extern const Window MessageOnlyHWnd;
 
 class MessageSink : protected Control
 {

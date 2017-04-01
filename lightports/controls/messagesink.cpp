@@ -10,6 +10,8 @@
 
 namespace Windows {
 
+const Window MessageOnlyHWnd = Window(HWND_MESSAGE);
+
 static ATOM getMessageSinkClass() {
   static ATOM window_class = Control::registerClass(
                                L"MessageSink",
