@@ -20,7 +20,9 @@ public:
   static const DWORD AllThreads = 0;
 
   enum {
-    MouseLowLevel = WH_MOUSE_LL
+    Cbt = WH_CBT,
+    MouseLowLevel = WH_MOUSE_LL,
+    Mouse = WH_MOUSE,
   };
 
   void create(HINSTANCE hinstance, int hook_id, DWORD thread_id, HOOKPROC func)
@@ -45,6 +47,28 @@ public:
 private:
   HookHandle hook_;
 };
+
+using GetHookProc = Hook& (*)();
+using ManagedHookProc = LRESULT (*)(Hook& hook, int code, WPARAM wparam, LPARAM lparam);
+
+template<GetHookProc HookGetter, ManagedHookProc Proc>
+LRESULT CALLBACK hookProc(int code, WPARAM wparam, LPARAM lparam)
+{
+  Hook& hook = HookGetter();
+  if (code >= 0)
+  {
+    try
+    {
+      return Proc(hook, code, wparam, lparam);
+    }
+    catch (...)
+    {
+      ::OutputDebugStringW(L"exception in hook function");
+    }
+  }
+
+  return hook.callNext(code, wparam, lparam);
+}
 
 } // namespace Windows
 
