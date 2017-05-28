@@ -4,7 +4,7 @@
 #include <windows.h>
 #include <memory>
 
-#include <cpp-utils/memory/unmanaged.h>
+#include <cpp-utils/memory/ptr_algorithm.h>
 #include <lightports/core/memory.h>
 
 namespace Windows {
@@ -28,13 +28,13 @@ public:
   : hicon_(hicon)
   { }
 
-  HICON getHICON() const { return hicon_.get(); }
+  HICON getHICON() const { return cpp::get_ptr(hicon_); }
 
 private:
   Storage hicon_;
 };
 
-using IconView   = IconBase<std::unique_ptr<HICON, cpp::no_deleter<HICON>>>;
+using IconView   = IconBase<HICON>;
 using IconHandle = IconBase<std::unique_ptr<HICON, HICONDeleter>>;
 
 }

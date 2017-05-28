@@ -11,7 +11,7 @@
 #include <windows.h>
 #include <memory>
 
-#include <cpp-utils/memory/unmanaged.h>
+#include <cpp-utils/memory/ptr_algorithm.h>
 #include <lightports/core.h>
 
 #ifndef OCR_HELP
@@ -26,30 +26,35 @@ struct HCURSORDeleter
   void operator()(HCURSOR ptr) { ::DestroyCursor(ptr); }
 };
 
-template<typename Storage>
-class CursorBase : public Storage
+template<typename Storage = HCURSOR>
+class CursorBase
 {
 public:
+  using View = CursorBase<>;
+  using Handle = CursorBase<std::unique_ptr<HCURSOR, HCURSORDeleter>>;
+
   CursorBase()
-  : Storage(nullptr)
+  : ptr_(nullptr)
   { }
 
   explicit
   CursorBase(HCURSOR hicon)
-  : Storage(hicon)
+  : ptr_(hicon)
   { }
 
-  CursorBase<std::unique_ptr<HCURSOR, HCURSORDeleter>> copy() const
+  Handle clone() const
   {
-    return CursorBase<std::unique_ptr<HCURSOR, HCURSORDeleter>>(
-         CopyCursor(getHCURSOR()));
+    return Handle(CopyCursor(getHCURSOR()));
   }
 
-  HCURSOR getHCURSOR() const { return Storage::get(); }
+  HCURSOR getHCURSOR() const { return cpp::get_ptr(ptr_); }
+
+private:
+  Storage ptr_;
 };
 
-using CursorView   = CursorBase<std::unique_ptr<HCURSOR, cpp::no_deleter<HCURSOR>>>;
-using CursorHandle = CursorBase<std::unique_ptr<HCURSOR, HCURSORDeleter>>;
+using CursorView   = CursorBase<>::View;
+using CursorHandle = CursorBase<>::Handle;
 
 inline
 Point getCursorPosition()
@@ -65,8 +70,9 @@ void setCursorPosition(Point pt)
   win_throw_on_fail(SetCursorPos(pt.getX(), pt.getY()));
 }
 
+template<typename T>
 inline
-CursorView setCursor(CursorView newCursor)
+CursorView setCursor(const CursorBase<T>& newCursor)
 {
   return CursorView(win_throw_on_fail(
     ::SetCursor(newCursor.getHCURSOR())
