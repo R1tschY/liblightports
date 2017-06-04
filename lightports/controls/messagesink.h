@@ -3,7 +3,6 @@
 
 #include "control.h"
 
-#include <functional>
 #include <windows.h>
 
 namespace Windows {

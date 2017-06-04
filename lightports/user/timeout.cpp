@@ -5,7 +5,7 @@
 #include <cpp-utils/assert.h>
 
 #include "../core/debug.h"
-#include "../extra/charcodecs.h"
+#include "../core/charcodecs.h"
 #include "../controls/utilwindow.h"
 
 namespace Windows {

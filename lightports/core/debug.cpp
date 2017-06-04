@@ -14,11 +14,12 @@
 #include <winbase.h>
 #include <winnt.h>
 #include <winuser.h>
-#include <codecvt>
 #include <experimental/string_view>
 #include <locale>
 #include <sstream>
 #include <comdef.h>
+
+#include "charcodecs.h"
 
 namespace Windows {
 
@@ -62,7 +63,7 @@ std::wstring getWindowsError(DWORD code)
   auto error_string = getErrorString(code, Language::Neutral);
   if (!error_string) {
     cpp::small_owstringstream<64> stream;
-    stream << L"Windows error code: " << code << L'\0';
+    stream << L"Windows error code: " << std::hex << code << L'\0';
     return stream.str();
   }
 
@@ -74,12 +75,11 @@ std::string getAsciiWindowsError(DWORD code)
   auto error_string = getErrorString(code, Language::Neutral);
   if (!error_string) {
     cpp::small_ostringstream<64> stream;
-    stream << "Windows error code: " << code << '\0';
+    stream << "Windows error code: " << std::hex << code << '\0';
     return stream.str();
   }
 
-  std::wstring_convert<std::codecvt_utf8<wchar_t>> converter;
-  return converter.to_bytes(error_string.begin(), error_string.end());
+  return to_string(cpp::wstring_view(error_string.data(), error_string.size()));
 }
 
 void printMessage(LogLevel level, const wchar_t* format, ...) {

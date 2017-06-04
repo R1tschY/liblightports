@@ -2,7 +2,7 @@
 
 #include <memory>
 
-#include "../extra/charcodecs.h"
+#include "../core/charcodecs.h"
 #include "messagesink.h"
 #include "../core/debug.h"
 

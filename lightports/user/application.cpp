@@ -7,7 +7,7 @@
 #include "../core/macros.h"
 #include "../core/exception.h"
 #include "../core/debugstream.h"
-#include "../extra/charcodecs.h"
+#include "../core/charcodecs.h"
 
 namespace Windows {
 
@@ -17,20 +17,6 @@ namespace Windows {
 //  GetVersionEx(&wininfo);
 //  return (wininfo.dwMajorVersion << 8) | (wininfo.dwMinorVersion);
 //}
-
-static void Application_newfailed() {
-  _putws(L"not enough memory!");
-  abort();
-}
-
-static void Application_terminate() {
-  _putws(L"uncatched exception!");
-  abort();
-}
-
-static void Application_unexpected() {
-  throw;
-}
 
 Application* Application::instance_ = nullptr;
 
@@ -45,9 +31,6 @@ Application::Application(cpp::wstring_view name, HINSTANCE instance) :
 
   setlocale(LC_ALL, "");
   _tzset();
-  std::set_new_handler(Application_newfailed);
-  std::set_unexpected(Application_unexpected);
-  std::set_terminate(Application_terminate);
 
   mutex_.reset(::CreateMutex(nullptr, false, name.data()));
   DWORD error = ::GetLastError();

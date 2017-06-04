@@ -30,7 +30,7 @@ std::wstring getKnownFolderPath(REFKNOWNFOLDERID fid, DWORD flags)
 {
   wchar_t* result;
 
-  scope(exit) { if (result) CoTaskMemFree(result); };
+  auto guard = cpp::make_guard([&](){ if (result) CoTaskMemFree(result); });
   win_throw_on_fail(
     ::SHGetKnownFolderPath(fid, flags, nullptr, &result)
   );
