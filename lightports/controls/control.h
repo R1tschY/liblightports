@@ -151,6 +151,13 @@ public:
   std::wstring getWindowText() const
   { return ControlCommonBase::getWindowText(getHWND()); }
 
+  Rectangle getWindowRect() const
+  {
+    RECT result;
+    win_throw_on_fail(::GetWindowRect(getHWND(), &result));
+    return result;
+  }
+
   HWND findChild(cpp::wstring_view class_name, cpp::wstring_view window_name) const
   {
     return win_throw_on_fail(
